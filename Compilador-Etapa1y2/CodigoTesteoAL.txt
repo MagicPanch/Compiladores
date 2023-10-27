@@ -1,0 +1,41 @@
+*{Testeo de constantes con el primer y último valor dentro del rango}* *{NOTA: EN CADA CASO SE INCLUYEN ALGUNOS OTROS TOKENS ADICIONALES. TAMBIÉN SE ACLARA QUE SE ESPERA QUE MUCHAS LÍNEAS NO TENGAN TOKENS, POR TENER SOLO COMENTARIOS O SALTOS DE LÍNEA. PARA CIERTOS CASOS RELEVANTES, SE ESPECIFICA TAMBIÉN LO QUE SE ESPERA EN LA TABLA DE SÍMBOLOS}*
+contador = contador + 32768_i,		*{Este es el caso del limite superior de los enteros de 16 bits (el inferior no se puede testear porque es negativo). Se espera que se reconozca el token [274] en la línea 2}*
+contador = 0_ul + 4294967295_ul,	*{Este es el caso de los enteros largos sin signo de 32 bits. Se espera que se reconozcan ambos tokens [275] en la línea 3}*
+contador = 2.2250738585072011D-308 + 1.7976931348623156D+308,		*{Este es el caso de los flotantes de 64 bits. Se espera que se reconozcan ambos tokens [273] en la línea 4}*
+
+*{Testeo de constantes con el primer y último valor fuera del rango}*
+contador = contador + 32769_i, 		*{Este es el caso del limite superior de los enteros de 16 bits (el inferior no se puede testear). Se espera que no se reconozca el token [274] en la línea 7 y que se informe un error de rango para este caso}*
+contador = 4294967296_ul, 	*{Este es el caso de los enteros largos sin signo de 32 bits (el inferior no se puede testear porque es negativo). Se espera que no se reconozca el token [275] en la línea 8 y que se informe un error de rango para este caso}*
+contador = 2.2250738585072014D-308 + 1.7976931348623157D+308,		*{Este es el caso de los flotantes de 64 bits. Se espera que no se reconozca ningún token [273] en la línea 9 y que se informen dos errores de rango para este caso}*
+
+*{Testeo de números de punto flotante}*
+contador = 5.5 + 0.,		*{Parte entera con y sin parte decimal. Se espera que se reconozcan ambos tokens [273] en la línea 12}* 
+contador = 3.2 - .1,		*{Parte decimal con y sin parte entera. Se espera que se reconozcan ambos tokens [273] en la línea 13}*
+contador = 2.123d+98 / 5.D-8 * .45d-2,		*{Números con y sin parte entera, con y sin parte decimal, con exponente positivo y negativo. Se espera que se reconozcan los 3 tokens [273] en la línea 14}*
+
+*{Testeo de identificadores}*
+identificador_muy_largo,	*{Identificador que se pasa del limite de 20 caracteres y tiene guiones bajos. Se espera que se reconozca el token [277] en la línea 17 y que se informe un warning de límite de cantidad de caracteres para este caso. En la tabla de símbolos se espera que el lexema guardado sea identificador_muy_la en lugar de identificador_muy_largo}*
+_identificador_1,	*{Identificador que no supera el limite de 20 caracteres, tiene un digito y guiones bajos. Se espera que se reconozca el token [277] en la línea 18}*
+identificador.,		*{Identificador que no supera el limite de 20 caracteres pero que tiene un caracter distinto de guion bajo, letra minúscula y dígito. Se espera que se reconozca el token [277] en la línea 19 y que haya un token [46], para el "." (antes del [44] de la ","). El lexema en la tabla de símbolos se espera que sea identificador (no tiene que tener el ".")}*
+
+*{Testeo de palabras reservadas}*
+ELSE,		*{Palabra reservada válida ELSE. Se espera que se reconozca el token [258] en la línea 22}*
+else,		*{Palabra reservada no válida al ser escrita con letras minúsculas (se reconoce como identificador). Se espera que no se reconozca el token [258] en la línea 23, pero sí el [277] por el identificador}*
+iF,		*{Palabra reservada no válida al tener una letra minúscula (se reconoce como un identificador y una palabra reservada no válida). Se espera que no se reconozca el token [257] en la línea 24, pero sí el [277] por el identificador. Además, se espera un error de palabra reservada no válida para este caso}*
+
+*{Testeo de cadenas multilinea}*
+%hola como
+
+		andas
+	% 		*{Cadena multilinea bien escrito. Se espera que se reconozca el token [276] en la línea 30. Se espera que en la tabla de símbolos el lexema almacenado sea %hola como		andas	%}*
+%hola como
+
+		andas?
+	% 		*{Cadena multilinea mal escrito (por tener el signo de pregunta que no es aceptado por el lenguaje). Se espera que no se reconozca el token [276] en la línea 34. Además, se espera un error de cadena de caracteres con caracteres inválidos para este caso (especificando línea 33 y no 34, ya que la 33 es en la que estaba el caracter no válido detectado)}*
+
+*{Comentarios}*
+*{este es un comentario
+	de muchas
+	líneas}* 	*{Comentario multilínea bien escrito, que al igual que cualquier comentario, no debe ser reconocido con un token}*
+*{este es un comentario
+mal cerrado, que debe provocar un warning para este caso, indicando que el programa finalizó sin cerrar un comentario*}

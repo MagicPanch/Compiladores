@@ -1,0 +1,44 @@
+{
+	*{Declaraciones de clases sin errores}*
+	
+	CLASS c1 IMPLEMENT interfaz {			*{Esta clase implementa una interfaz}*
+		INT _atributo1; _atributo2,
+
+		VOID funcion_interfaz (INT numero) {
+			RETURN,
+		},							
+	},						*{Se deberia detectar para linea 10: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*
+
+	CLASS c2 {					*{Esta clase no implementa una interfaz}*
+		INT _atributo1; _atributo2,
+
+		VOID funcion (INT numero) {
+			RETURN,
+		},							
+	},						*{Se deberia detectar para linea 18: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*
+	
+	CLASS c3 { },					*{Se deberia detectar para linea 20: "DECLARACION DE CLASE VACIA"}*
+	CLASS c4 IMPLEMENT interfaz { },		*{Se deberia detectar para linea 21: "DECLARACION DE CLASE VACIA"}*	
+
+	*{Declaraciones de clases con errores}*
+
+	CLASS c5 IMPLEMENT {				*{Se deberia detectar para linea 25: "syntax error" y un error para esa misma linea por encabezado de clase invalido}*
+		INT _atributo1; _atributo2,
+
+		VOID funcion_interfaz (INT numero) {
+			RETURN,
+		},							
+	},						*{Se deberia detectar para linea 31: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*
+
+	CLASS					
+		INT _atributo1; _atributo2,		*{Se deberia detectar para linea 33: "syntax error" y un error para esa misma linea por encabezado de clase invalido (es en esa linea ya que recien ahi se encuentra con el simbolo que genera el error, porque arriba solo esta CLASS, no hay una llave o algo que permita detectar antes que es un encabezado invalido)}*
+
+		VOID funcion_interfaz (INT numero) {
+			RETURN,
+		},								
+	},						*{Se deberia detectar para linea 39: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS" y un error de bloque de sentencias declarativas invalido por falta de la llave de apertura del cuerpo de la clase}*
+
+	CLASS c6 {					
+		x = 2_i,				*{Se deberia detectar para linea 42: un error porque en un bloque de sentencias declarativas no puede haber sentencias ejecutables}*							
+	},						*{Se deberia detectar para linea 43: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*
+}	

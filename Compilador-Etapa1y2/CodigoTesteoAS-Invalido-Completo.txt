@@ -1,0 +1,84 @@
+
+{
+	IF (c1._atributo1 >= 2_i)
+		RETURN,
+	END_IF,							*{Se deberia detectar para linea 5: "CLAUSULA DE SELECCION IF CON SENTENCIA EJECUTABLE DE RETORNO COMPLETO Y SIN ELSE" y un error para esa misma linea porque el programa principal no puede contener un posible retorno}* 				
+	CLASS c1 IMPLEMENT {			*{Se deberia detectar para linea 6: "syntax error" (ya que en este caso, se busco que escribir mal el encabezado imprima tanto syntax error como un mensaje especifico) y un error para esa misma linea por encabezado de clase invalido}*
+		INT _atributo1 _atributo2,	*{Se deberia detectar para linea 7: "DECLARACION DE LISTA DE VARIABLES NUMERICAS" y un error de declaracion invalida de variable  porque falta un ";" entre dos variables}*
+
+		VOID funcion_interfaz (INT numero) {
+			VOID funcion_anidada() {
+				INT variable,			*{Se deberia detectar para linea 11: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
+			},							*{Se deberia detectar para linea 12: "DECLARACION DE FUNCION" y un error de que la funcion no garantiza ningun retorno (de hecho en este caso nunca tendra un retorno, pero el mensaje es que no se garantiza retorno porque el Parser la ve como una funcion sin retorno completo, mas alla de si tiene o no algun posible retorno parcial)}*
+			_atributo1 = 15_i,			*{Se deberia detectar para linea 13: "ASIGNACION USANDO OPERADOR DE IGUAL"}*
+			FOR t IN RANGE (5_i;15_i;3_i) {
+				numero -= 1_i,			*{Se deberia detectar para linea 15: "ASIGNACION USANDO OPERADOR DE MENOS IGUAL"}*
+				IF (numero !! 12_i)		
+					RETURN,			
+				END_IF,					*{Se deberia detectar para linea 18: "CLAUSULA DE SELECCION IF CON SENTENCIA EJECUTABLE DE RETORNO COMPLETO Y SIN ELSE"}*
+			},							*{Se deberia detectar para linea 19: "SENTENCIA FOR CON BLOQUE DE SENTENCIAS EJECUTABLES DE RETORNO PARCIAL"}*
+			RETURN,
+		},								*{Se deberia detectar para linea 21: "DECLARACION DE FUNCION"}*					
+	},									*{Se deberia detectar para linea 22: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*								
+
+	INTERFACE {									*{Se deberia detectar para linea 24: error por encabezado de interfaz invalido}*
+		VOID funcion_interfaz (INT numero),		*{Se deberia detectar para linea 25: "DECLARACION DE PROTOTIPO DE FUNCION"}*
+	},											*{Se deberia detectar para linea 26: "DECLARACION DE INTERFAZ CON BLOQUE DE PROTOTIPOS"}*		
+
+	CLASS c2 {
+		c1,						*{Se deberia detectar para linea 29: "DECLARACION DE REFERENCIA A CLASE"}*
+
+		VOID funcion_c2(),		*{Se deberia detectar para linea 31: "DECLARACION DE PROTOTIPO DE FUNCION"}*
+	},							*{Se deberia detectar para linea 32: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*
+
+	IMPL FOR c2 {				*{Se deberia detectar para linea 34: "syntax error" (ya que en este caso, se busco que escribir mal el encabezado imprima tanto syntax error como un mensaje especifico) y un error para esa misma linea por encabezado de clausula IMPL invalido}*
+		VOID funcion_c2() {
+			RETURN,
+		},						*{Se deberia detectar para linea 37: "DECLARACION DE FUNCION"}*
+	},							*{Se deberia detectar para linea 38: "DECLARACION DE CLAUSULA IMPL CON BLOQUE DE FUNCIONES IMPLEMENTADAS"}*
+
+	INT int1; int2; int3 ,					*{Se deberia detectar para linea 40: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
+	DOUBLE double1; double2; double3 ,		*{Se deberia detectar para linea 41: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
+
+	VOID funcion1 (este es un parametro invalido) {		*{Se deberia detectar para linea 43: "syntax error" (ya que en este caso, se busco que escribir mal el parametro imprima tanto syntax error como un mensaje especifico) y un error para esa misma linea por parametro de funcion mal escrito}*
+		RETURN,
+	},													*{Se deberia detectar para linea 45: "DECLARACION DE FUNCION"}*
+
+	VOID funcion2 ()
+	
+		double3 -= -5_i + double1 * -32_ul,			*{Se deberia detectar para linea 49: "syntax error" (por haber una constante unsigned long con signo negativo) y un error para esa misma linea por sentencia invalida sintacticamente}*
+		IF (double3 < double2) {
+			double2 = 1.2D+5,						*{Se deberia detectar para linea 51: "ASIGNACION USANDO OPERADOR DE IGUAL"}*
+			IF (int1 == int2)
+				RETURN,
+			ELSE
+				RETURN,
+			END_IF,									*{Se deberia detectar para linea 56: "CLAUSULA DE SELECCION IF CON SENTENCIA EJECUTABLE DE RETORNO COMPLETO Y ELSE CON SENTENCIA EJECUTABLE DE RETORNO COMPLETO"}*
+		}
+		ELSE
+			RETURN,
+		END_IF,										*{Se deberia detectar para linea 60: "CLAUSULA DE SELECCION IF CON BLOQUE DE SENTENCIAS EJECUTABLES DE RETORNO COMPLETO Y ELSE CON SENTENCIA EJECUTABLE DE RETORNO COMPLETO"}*
+	},												*{Se deberia detectar para linea 61: "DECLARACION DE FUNCION" y un error por falta de la llave de apertura del cuerpo de la funcion}*
+
+	ULONG ulong1 ,									*{Se deberia detectar para linea 63: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
+	funcion1(ulong1 + ulong1)
+	funcion1(ulong1),								*{Se deberia detectar para linea 65: "syntax error" (porque falta el delimitador de "," en la sentencia anterior y se logra sincronizar el error con el delimitador de la sentencia de esta linea) y un error para esa misma linea por sentencia invalida sintacticamente}*					
+	funcion1(1234_ul),								*{Se deberia detectar para linea 66: "INVOCACION A FUNCION"}*	
+	funcion2(DOUBLE d),								*{Se deberia detectar para linea 67: "syntax error" (ya que en este caso, se busco que escribir mal el parametro real imprima tanto syntax error como un mensaje especifico) y un error para esa misma linea por parametro real mal escrito}*
+
+	PRINT %
+	hola $    										*{Se deberia detectar para linea 70: error por caracter invalido en cadena multilinea (este error es lexico, y es por el "$")}*	     
+	
+	mundo	%,										*{Se deberia detectar para linea 72: "SALIDA DE MENSAJE" y un error por salida de mensaje invalida ya que al haber un caracter invalido en la cadena multilinea, el analizador lexico no envia el token de la cadena y es como si no estuviera}*
+
+	c1 inst_c1,										*{Se deberia detectar para linea 74: "DECLARACION DE LISTA DE VARIABLES DEL TIPO DE UNA CLASE"}*	
+	FOR i IN RANGE (0_i;10_i;-1_i {					*{Se deberia detectar para linea 75: error por controlador de rango de iteraciones del FOR invalido (falta el parentesis de cierre)}*		
+		FOR j IN RANGE (0_i;100_i;10_i)
+			inst_c1.funcion_c1(j),					*{Se deberia detectar para linea 77: "INVOCACION A FUNCION" y "SENTENCIA FOR CON SENTENCIA EJECUTABLE"}*
+		inst_c1._atributo1 = i / 32768_i,			*{Se deberia detectar para linea 78: "ASIGNACION USANDO OPERADOR DE IGUAL" y un error por constante entera simple fuera de rango}*	
+		INT variable_for,					*{Se deberia detectar para linea 79: un error porque no puede haber sentencias declarativas en un bloque de sentencias ejecutables (porque las sentencias internas de una sentencia de FOR si o si deben ser ejecutables)}*
+	},								*{Se deberia detectar para linea 80: "SENTENCIA FOR CON BLOQUE DE SENTENCIAS EJECUTABLES"}*
+}													
+
+sentencia fuera de las llaves de la funcion			*{Se deberia detectar para linea 83: "PROGRAMA" (lo detecta recien en esta linea porque hay mas tokens y entonces lee el siguiente antes de tirar "syntax error" y de determinar que ya hay un programa formado), un error de "syntax error" y un mensaje de error indicando que no puede haber sentencias fuera de las llaves del programa}*
+*{NOTA: AL FINAL DE LA COMPILACION, DEBE FIGURAR UN MENSAJE DE QUE EL PROGRAMA NO COMPILO CORRECTAMENTE (POR LOS ERRORES). ADEMAS, COMO ACLARACION PARTICULAR, EN LA TABLA DE SIMBOLOS NO DEBE FIGURAR EL LEXEMA DE LA CADENA DE CARACTERES Y PARA LA CONSTANTE 5_I DEBE APARECER UNA ENTRADA POSITIVA Y OTRA NEGATIVA YA QUE ESTAN AMBAS EN EL PROGRAMA}*

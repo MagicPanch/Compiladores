@@ -1,0 +1,23 @@
+{
+	*{Sentencias FOR sin errores}*
+
+	FOR i IN RANGE (0_i;10_i;-1_i) {
+		FOR j IN RANGE (0_i;100_i;10_i)
+			inst_c1.funcion_c1(j),		*{Se deberia detectar para linea 6: "SENTENCIA FOR CON SENTENCIA EJECUTABLE"}*
+		inst_c1._atributo1 = i / 2_i,
+	},						*{Se deberia detectar para linea 8: "SENTENCIA FOR CON BLOQUE DE SENTENCIAS EJECUTABLES"}*
+	FOR j IN RANGE (0_i;100_i;10_i)
+		inst_c1.funcion_c1(j),			*{Se deberia detectar para linea 10: "SENTENCIA FOR CON SENTENCIA EJECUTABLE"}*
+
+	*{Clausulas FOR con errores}*
+
+	FOR j IN (0_i;100_i;10_i)			*{Se deberia detectar para linea 14: un error por encabezado de bucle FOR invalido}*
+		inst_c1.funcion_c1(j),			*{Se deberia detectar para linea 15: "SENTENCIA FOR CON SENTENCIA EJECUTABLE"}*
+
+	FOR j IN RANGE (0_i;100_i;10_i	
+		inst_c1.funcion_c1(j),			*{Se deberia detectar para linea 18: "SENTENCIA FOR CON SENTENCIA EJECUTABLE" y un error por controlador del FOR invalido, por falta del parentesis de cierre}*
+	FOR j IN RANGE (0_i;100_i;10_i) {
+		inst_c1.funcion_c1(j),
+		INT x,					*{Se deberia detectar para linea 21: un error porque no puede haber sentencias declarativas en un bloque de sentencias ejecutables (porque las sentencias internas de una sentencia de FOR si o si deben ser ejecutables)}*
+	},						*{Se deberia detectar para linea 22: "SENTENCIA FOR CON BLOQUE DE SENTENCIAS EJECUTABLES"}*		
+}

@@ -1,0 +1,45 @@
+{
+	*{Declaraciones de metodos sin errores}*
+	
+	VOID funcion1 (ULONG parametro) {
+		RETURN,
+	},						*{Se deberia detectar para linea 6: "DECLARACION DE FUNCION" (esta es una funcion con parametro y una sentencia de RETURN directa)}*	
+
+	VOID funcion2 ()
+	{
+		double3 -= -5_i + double1 * 1.,
+		IF (double3 < double2) {
+			IF (int1 == int2)
+				RETURN,
+			ELSE
+				RETURN,
+			END_IF,		
+		}
+		ELSE
+			RETURN,
+		END_IF,							
+	},				*{Se deberia detectar para linea 21: "DECLARACION DE FUNCION" (esta es una funcion sin parametro y dos sentencias en el flujo principal donde la segunda representa el retorno ya que es una sentencia if de retorno completo, o sea retorna algo para todas sus ramas)}*
+
+	VOID funcion3(),		*{Se deberia detectar para linea 23: "DECLARACION DE PROTOTIPO DE FUNCION" (este es un prototipo de funcion sin parametro)}*
+	VOID funcion4(INT parametro),	*{Se deberia detectar para linea 24: "DECLARACION DE PROTOTIPO DE FUNCION" (este es un prototipo de funcion con parametro)}*
+
+	*{Declaraciones de metodos con errores}*
+
+	VOID funcion5 (ULONG parametro) { },	*{Se deberia detectar para linea 28: "DECLARACION DE FUNCION" y un error de que la funcion no garantiza ningun retorno}*
+	
+	VOID funcion6 () {
+		INT variable,				
+	},					*{Se deberia detectar para linea 32: "DECLARACION DE FUNCION" y un error de que la funcion no garantiza ningun retorno}*
+
+	VOID funcion7 (este es un parametro invalido) {		*{Se deberia detectar para linea 34: "syntax error" y un error para esa misma linea por parametro de funcion mal escrito}*
+		RETURN,				
+	},					*{Se deberia detectar para linea 36: "DECLARACION DE FUNCION"}*
+
+	VOID funcion8 (INT parametro,		*{Se deberia detectar para linea 38: "DECLARACION DE PROTOTIPO DE FUNCION", y un error para esa misma linea por parametro de funcion mal escrito }*
+
+	VOID (INT parametro) {			*{Se deberia detectar para linea 40: error por encabezado de metodo invalido}*
+		RETURN,				
+	},					*{Se deberia detectar para linea 42: "DECLARACION DE FUNCION"}*
+	
+	VOID (INT parametro),			*{Se deberia detectar para linea 44: "DECLARACION DE PROTOTIPO DE FUNCION" y un error para esa misma linea por encabezado de metodo invalido}*
+}	

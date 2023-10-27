@@ -1,0 +1,35 @@
+{
+	*{Declaraciones de clausulas IMPL sin errores}*
+	
+	IMPL FOR c1: {
+		VOID funcion_c1() {
+			RETURN,
+		},									
+	},						*{Se deberia detectar para linea 8: "DECLARACION DE CLAUSULA IMPL CON BLOQUE DE FUNCIONES IMPLEMENTADAS"}*
+
+	IMPL FOR c2: { },				*{Se deberia detectar para linea 10: "DECLARACION DE CLAUSULA IMPL VACIA"}*
+
+	*{Declaraciones de clausulas IMPL con errores}*
+
+	IMPL FOR c3 {					*{Se deberia detectar para linea 14: "syntax error" y un error para esa misma linea por encabezado de clausula IMPL invalido}*
+		VOID funcion_c1() {
+			RETURN,
+		},									
+	},						*{Se deberia detectar para linea 18: "DECLARACION DE CLAUSULA IMPL CON BLOQUE DE FUNCIONES IMPLEMENTADAS"}*
+
+	IMPL c4 {					*{Se deberia detectar para linea 20: "syntax error" y un error para esa misma linea por encabezado de clausula IMPL invalido}*
+		VOID funcion_c1() {
+			RETURN,
+		},									
+	},						*{Se deberia detectar para linea 24: "DECLARACION DE CLAUSULA IMPL CON BLOQUE DE FUNCIONES IMPLEMENTADAS"}*
+
+	IMPL FOR c5:				
+		VOID funcion_c1() {
+			RETURN,
+		},									
+	},						*{Se deberia detectar para linea 30: "DECLARACION DE CLAUSULA IMPL CON BLOQUE DE FUNCIONES IMPLEMENTADAS" y un error de bloque de declaraciones de funciones invalido por falta de la llave de apertura del cuerpo de la clausula}*
+}
+
+
+
+                              

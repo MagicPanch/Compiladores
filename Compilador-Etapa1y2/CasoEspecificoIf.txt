@@ -1,0 +1,8 @@
+{
+	IF (x > y)
+		INT x,		*{Esta es la sentencia declarativa que genera el error y el conflicto de reconocimiento de la sentencia IF}*
+	ELSE
+		x = x + 1_i,
+	END_IF,
+	funcion(),
+}

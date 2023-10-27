@@ -1,0 +1,22 @@
+{
+	*{Declaraciones de interfaces sin errores}*
+	
+	INTERFACE i1 {
+		VOID prototipo1(),
+		VOID prototipo2(),								
+	},						*{Se deberia detectar para linea 7: "DECLARACION DE INTERFAZ CON BLOQUE DE PROTOTIPOS"}*
+
+	INTERFACE i2 { },				*{Se deberia detectar para linea 9: "DECLARACION DE INTERFAZ VACIA"}*
+
+	*{Declaraciones de interfaces con errores}*
+
+	INTERFACE {					*{Se deberia detectar para linea 13: error por encabezado de interfaz invalido}*
+		VOID prototipo1(),
+		VOID prototipo2(),								
+	},						*{Se deberia detectar para linea 16: "DECLARACION DE INTERFAZ CON BLOQUE DE PROTOTIPOS"}*							
+
+	INTERFACE i3				
+		VOID prototipo1(),
+		VOID prototipo2(),								
+	},						*{Se deberia detectar para linea 21: "DECLARACION DE INTERFAZ CON BLOQUE DE PROTOTIPOS" y un error de bloque de declaraciones de prototipos invalido por falta de la llave de apertura del cuerpo de la clausula}*
+}

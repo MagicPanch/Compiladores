@@ -1,0 +1,17 @@
+{
+	*{Clausulas de seleccion IF sin errores}*
+
+	IF (x > y) x = 8_i, ELSE { x = 8_i, funcion(), } END_IF,	*{Se deberia detectar para linea 4: "CLAUSULA DE SELECCION IF CON SENTENCIA EJECUTABLE Y ELSE CON BLOQUE DE SENTENCIAS EJECUTABLES"}*
+	IF (x > y) {x = 8_i,} END_IF,					*{Se deberia detectar para linea 5: "CLAUSULA DE SELECCION IF CON BLOQUE DE SENTENCIAS EJECUTABLES Y SIN ELSE"}*
+	IF (x <= y) {} ELSE x = 8_i, END_IF,				*{Se deberia detectar para linea 6: "CLAUSULA DE SELECCION IF VACIO Y ELSE CON SENTENCIA EJECUTABLE"}*
+	IF (x == y) {} ELSE {} END_IF,					*{Se deberia detectar para linea 7: "CLAUSULA DE SELECCION IF VACIO Y ELSE VACIO"}*
+
+	*{Clausulas de seleccion IF con errores}*
+
+	if (x == y) x = 8_i, END_IF,					*{Se deberia detectar para linea 11: un error por sentencia invalida sintacticamente, ya que el comienzo de la clausula es con un identificador en lugar de con la palabra reservada IF, dado que se la escribio en minuscula. Tambien se detecta otro error por sentencia invalida sintacticamente ya que la clausula tiene una "," dentro, por lo que se producen dos sincronizaciones de error. Y hay uno por parametro real invalido, ya que al detectar al if como un identificador, trata de generar una invocacion a funcion y el parametro no puede ser una comparacion}*
+	IF (x == y x = 8_i, END_IF,					*{Se deberia detectar para linea 12: "CLAUSULA DE SELECCION IF CON SENTENCIA EJECUTABLE Y SIN ELSE" y un error por formato de la condicion invalido por faltar el parentesis de cierre de la misma}*
+	IF (x >> y) x = 8_i, END_IF,					*{Se deberia detectar para linea 13: "CLAUSULA DE SELECCION IF CON SENTENCIA EJECUTABLE Y SIN ELSE" y un error por formato de la condicion invalido (porque ">>" no es un comparador valido)}*
+	IF (x == y) {INT y, funcion(), } END_IF,			*{Se deberia detectar para linea 14: "CLAUSULA DE SELECCION IF CON BLOQUE DE SENTENCIAS EJECUTABLES Y SIN ELSE" y un error porque no puede haber sentencias declarativas en un bloque de sentencias ejecutables (porque las sentencias de una clausula IF si o si deben ser ejecutables)}*
+}
+
+

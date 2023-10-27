@@ -1,0 +1,7 @@
+{
+	*{Declaraciones de referencias a clases (herencia por composicion)}*
+
+	clase,			*{Se deberia detectar para linea 4: "DECLARACION DE REFERENCIA A CLASE"}*
+	CLASE,			*{Se deberia detectar para linea 5: "syntax error" ya que "CLASE" se escribio con mayuscula (por lo que tambien hay un error lexico de palabra reservada invalida) y no se envia el token, llegando solo el de una ",", lo que ademas provoca un error de sentencia invalida sintacticamente}*
+	clase variable,		*{Se deberia detectar para linea 6: "DECLARACION DE LISTA DE VARIABLES DEL TIPO DE UNA CLASE" en lugar de una referencia a una clase, por haber una variable luego del nombre de la clase}*
+}

@@ -1,0 +1,10 @@
+{
+	*{Salidas de mensajes}*
+
+	PRINT %hola         
+			mundo	%,		*{Se deberia detectar para linea 5: "SALIDA DE MENSAJE"}*
+	PRINT %
+	hola $    				*{Se deberia detectar para linea 7: error por caracter invalido en cadena multilinea (este error es lexico, y es por el "$")}*	     
+	
+	mundo	%,				*{Se deberia detectar para linea 9: "SALIDA DE MENSAJE" y un error por salida de mensaje invalida ya que al haber un caracter invalido en la cadena multilinea, el analizador lexico no envia el token de la cadena y es como si no estuviera}*		
+}

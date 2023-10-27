@@ -1,0 +1,11 @@
+{
+	*{Invocaciones a funciones}*
+
+	funcion(),			*{Se deberia detectar para linea 4: "INVOCACION A FUNCION"}*
+	funcion(x + y),			*{Se deberia detectar para linea 5: "INVOCACION A FUNCION"}*
+	funcion(10_i),			*{Se deberia detectar para linea 6: "INVOCACION A FUNCION"}*
+	funcion(parametro),		*{Se deberia detectar para linea 7: "INVOCACION A FUNCION"}*
+	funcion(parametro, x + y),	*{Se deberia detectar para linea 8: "INVOCACION A FUNCION", un "syntax error" y un mensaje de error por parametro real invalido (ya que no se acepta mas de un parametro real)}*
+	funcion(INT z),			*{Se deberia detectar para linea 9: "INVOCACION A FUNCION", un "syntax error" y un mensaje de error por parametro real invalido (ya que no se aceptan declaraciones de variables como parametro real, solo expresiones aritmeticas)}*
+	funcion(otra_funcion()),	*{Se deberia detectar para linea 10: un "syntax error" y un mensaje de error por parametro real invalido (ya que no se aceptan invocaciones a otras funciones como parametro real, solo expresiones aritmeticas). Ademas, uno de sentencia invalida sintacticamente porque los parentesis de invocacion a funcion interna interfieren generando que no pueda detectarse como una invocacion a funcion esa sentencia mal escrita, lo cual es logico}*
+}

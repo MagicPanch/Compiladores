@@ -1,0 +1,23 @@
+{
+	*{Declaraciones de variables sin errores (desde la linea 4 a la 13 deberian detectarse declaraciones de variables numericas o de tipo de una clase por cada una)}*
+
+	INT v1, 			
+	ULONG v2,
+	DOUBLE v3,
+	INT v4; v5; v6,
+	ULONG v7; v8 ; v9,
+	DOUBLE v10; v11; v12,
+	int v13; v14; v15,		*{Aqui al escribirse int en minuscula, el lexico lo considera como un ID y por eso es una declaracion de variables del tipo de una clase}*
+	tipo_clase v16,
+	tipo_clase v17; v18,
+	INT v19, v20,			*{Para este caso, ademas figurara una declaracion de referencia a clase, porque al separar v1 y v20 con una ",", considera a v20 "," como una sentencia aparte}*
+
+	*{Declaraciones de variables con errores}*
+
+	INT v21; v22 v23,		*{Se deberia detectar para linea 17: "DECLARACION DE LISTA DE VARIABLES NUMERICAS" y un error de declaracion invalida de variable  porque falta un ";" entre dos variables}*
+	tipo_clase v24; v25 v26,	*{Se deberia detectar para linea 18: "DECLARACION DE LISTA DE VARIABLES DEL TIPO DE UNA CLASE" y un error de declaracion invalida de variable  porque falta un ";" entre dos variables}*
+	DOUBLE v27
+	tipo_clase v28,			*{Se deberia detectar para linea 20: "syntax error" (porque falta el delimitador de "," en la sentencia anterior y se logra sincronizar el error con el delimitador de la sentencia de esta linea) y un error para esa misma linea por sentencia invalida sintacticamente. Tambien marcara un error por falta de ";" ya que trata de conectar ambas sentencias en una sola (o sea trata de considerar al ID del tipo de la declaracion de esta linea como una variable de la declaracion de arriba mal conectada)"}*
+	ULNG v29,			*{Se deberia detectar para linea 21: "DECLARACION DE REFERENCIA A CLASE" (que no es una declaracion de variable), porque al escribir mal la palabra reservada del tipo numerico, el lexico no envia la misma y queda solo un ID seguido de una ",". Ademas, va a haber un error lexico de que no existe la palabra reservada "ULNG"}*
+	DOUBLEE v30; v31; v32,		*{Se deberia detectar para linea 22: "syntax error" y un error de sentencia invalida sintacticamente. Esto es porque al escribir mal la palabra reservada del tipo numerico, el lexico no envia la misma y entonces la sentencia comienza con un ID seguido de ";", lo cual no permitira hacer match con ninguna regla. Tras el error, se logra sincronizar al llegar a la "," de fin de sentencia}*
+}

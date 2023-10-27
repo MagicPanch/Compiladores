@@ -1,0 +1,24 @@
+{
+	*{Asignaciones sin errores (se va alternando entre asignaciones con "=" y "-="). Para todas las lineas entre la 4 y la 15 debe detectarse una asignacion con cualquiera de los dos operadores}*
+
+	x = 1_i,
+	x.y -= 2.99D+5,
+	x.y.z = 3_ul,
+	t -= x + j,
+	t = x - j,
+	t -= x * j,
+	t = x / j,
+	t -= x + j * e,
+	t = x * j / e,
+	t -= x + j * e - r,
+	t = 1_i + 2_i * 3_i - 4_i, 	*{Notar que en este caso el "-" del 4_i no hace que se considere como una constante negativa, sino que es un operador aritmetico mas. Por eso, en la tabla de simbolos no debe aparecer el 4_i negativo}*
+	t -= 1_i + 2_i / -5_i - 4_i, 	*{Notar que en este caso el "-" del 5_i hace que se considere como una constante negativa, no puede ser considerado como operador aritmetico ya que sino no seria valido tener el "*" seguido de este otro. Por eso, en la tabla de simbolos debe aparecer el 5_i negativo, y no positivo}*
+
+	*{Asignaciones con errores}*
+	
+	x + y = 1_i,			*{Se deberia detectar para linea 19: un "syntax error" y un mensaje de error por sentencia invalida sintacticamente (en este caso es porque la parte de la izquierda de la asignacion no puede ser una expresion aritmetica, debe ser una referencia)}*	
+	x -= 9.2 * -3_ul,		*{Se deberia detectar para linea 20: un "syntax error" y un mensaje de error por sentencia invalida sintacticamente, porque el "-" no puede ser usado como operador aritmetico inmediatamente a la derecha de otro, pero tampoco puede ser usado para hacer negativa una variable unsigned long}*
+	y = 3_i *,			*{Se deberia detectar para linea 21: un "syntax error" y un mensaje de error por sentencia invalida sintacticamente (en este caso es porque la expresion aritmetica de la derecha esta incompleta)}*			
+	8_i -= x,			*{Se deberia detectar para linea 22: un mensaje de error por sentencia invalida sintacticamente (en este caso es porque la parte de la izquierda de la asignacion no puede ser una constante, debe ser una referencia)}*
+	2_i = 3_i,			*{Se deberia detectar para linea 23: un mensaje de error por sentencia invalida sintacticamente (en este caso es porque la parte de la izquierda de la asignacion no puede ser una constante, debe ser una referencia)}*
+}
