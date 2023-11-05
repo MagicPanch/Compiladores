@@ -19,12 +19,11 @@ public class AccionSemantica7 extends AccionSemantica {
 		if (token_cantidad != null) {
 			System.out.print("[" + token_cantidad.getToken() + "]" + "   ");
 			par.setToken(token_cantidad.getToken());
-			token_cantidad.incrementarCantidad();
 		}
 		else {
 			Generador_Token generador_token = new Generador_Token();
 			int token_lexema_nuevo = generador_token.obtenerToken(par.getLexema());
-			AnalizadorLexico.simbolos.put(par.getLexema(), new AtributosSimbolo(token_lexema_nuevo, 1));
+			AnalizadorLexico.simbolos.put(par.getLexema(), new AtributosSimbolo(token_lexema_nuevo));
         	System.out.print("[" + token_lexema_nuevo + "]" + "   ");
         	par.setToken(token_lexema_nuevo);
 		}

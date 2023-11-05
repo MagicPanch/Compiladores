@@ -9,13 +9,13 @@
 
 %%
 
-programa:	bloque_sentencias               {System.out.print("(PROGRAMA) "); actualizarAmbitoActual("-");}
+programa:	bloque_sentencias               {System.out.print("(PROGRAMA) "); analizador_semantico.actualizarAmbitoActual("-");}
 		    | '{' '}'                       {System.out.print("(PROGRAMA VACIO) ");}
-            | error bloque_sentencias       {System.out.print("(PROGRAMA) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); actualizarAmbitoActual("-");}
-            | error '{' '}'                 {System.out.print("(PROGRAMA VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); actualizarAmbitoActual("-");}
-            | error '{' '}' error           {System.out.print("(PROGRAMA VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); actualizarAmbitoActual("-");}      
-            | bloque_sentencias error       {System.out.print("(PROGRAMA) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); actualizarAmbitoActual("-");}
-            | '{' '}' error                 {System.out.print("(PROGRAMA VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); actualizarAmbitoActual("-");}
+            | error bloque_sentencias       {System.out.print("(PROGRAMA) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-");}
+            | error '{' '}'                 {System.out.print("(PROGRAMA VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-");}
+            | error '{' '}' error           {System.out.print("(PROGRAMA VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-");}      
+            | bloque_sentencias error       {System.out.print("(PROGRAMA) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-");}
+            | '{' '}' error                 {System.out.print("(PROGRAMA VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-");}
 
 ;
 
@@ -62,24 +62,24 @@ sentencia_declarativa:  declaracion_variables
 
 ;
 
-declaracion_variables:  tipo_numerico lista_variables ','   {System.out.print("(DECLARACION DE LISTA DE VARIABLES NUMERICAS) ");}
-                        | ID lista_variables ','            {System.out.print("(DECLARACION DE LISTA DE VARIABLES DEL TIPO DE UNA CLASE) ");}
+declaracion_variables:  tipo_numerico lista_variables ','   {System.out.print("(DECLARACION DE LISTA DE VARIABLES NUMERICAS) "); analizador_semantico.registrarTipoID($1.sval, $2.sval);}
+                        | ID lista_variables ','            {System.out.print("(DECLARACION DE LISTA DE VARIABLES DEL TIPO DE UNA CLASE) "); analizador_semantico.eliminarEntradaOriginalID($1.sval); analizador_semantico.registrarTipoID($1.sval, $2.sval);}
 
 ;
 
-tipo_numerico:	INT
-                | ULONG
-                | DOUBLE
+tipo_numerico:	INT             {$$.sval = "INT";}
+                | ULONG         {$$.sval = "ULONG";}         
+                | DOUBLE        {$$.sval = "DOUBLE";}
 
 ;
 
-lista_variables:	lista_variables ';' ID
-			        | ID
-                    | lista_variables ID        {agregarError("ERROR: Declaracion invalida de variable en lista de variables, falta el ';'");}
+lista_variables:	lista_variables ';' ID      {analizador_semantico.registrarAmbitoUsoID($3.sval, "nombre_variable"); $$.sval = $1.sval + ";" + $3.sval;}
+			        | ID                        {analizador_semantico.registrarAmbitoUsoID($1.sval, "nombre_variable"); $$.sval = $1.sval;}
+                    | lista_variables ID        {agregarError("ERROR: Declaracion invalida de variable en lista de variables, falta el ';'"); analizador_semantico.registrarAmbitoUsoID($2.sval, "nombre_variable"); $$.sval = $1.sval + ";" + $2.sval;}
 
 ;
 
-declaracion_referencia_clase:   ID ','      {System.out.print("(DECLARACION DE REFERENCIA A CLASE) ");}
+declaracion_referencia_clase:   ID ','      {System.out.print("(DECLARACION DE REFERENCIA A CLASE) "); analizador_semantico.eliminarEntradaOriginalID($1.sval);}
 
 ;
 
@@ -99,19 +99,19 @@ lista_declaraciones_prototipos:     lista_declaraciones_prototipos declaracion_p
 
 ;
 
-declaracion_prototipo:      encabezado_metodo parametro ','       {System.out.print("(DECLARACION DE PROTOTIPO DE FUNCION) "); actualizarAmbitoActual("-");}
+declaracion_prototipo:      encabezado_metodo parametro ','       {System.out.print("(DECLARACION DE PROTOTIPO DE FUNCION) "); analizador_semantico.verificarPosibleImplementacionFuncionInterfaz($1.sval); analizador_semantico.actualizarAmbitoActual("-"); analizador_semantico.definirUsoPrototipo($1.sval); analizador_semantico.verificarCantidadAnidamientos($1.sval);}
 
 ;
 
-encabezado_metodo:      VOID ID      {actualizarAmbitoActual($2.sval);}        
-                        | VOID       {agregarError("ERROR: Encabezado de metodo invalido, el formato correcto es: VOID ID");}
+encabezado_metodo:      VOID ID         {analizador_semantico.registrarAmbitoUsoID($2.sval, "nombre_funcion"); analizador_semantico.actualizarAmbitoActual($2.sval); $$.sval = $2.sval;}        
+                        | VOID          {agregarError("ERROR: Encabezado de funcion invalido, el formato correcto es: VOID ID"); analizador_semantico.marcarAmbitoInvalido(":"); $$.sval = null;}
 
-;
+; 
 
-parametro:	'(' tipo_numerico ID ')'
-            | '(' ')'
-            | tipo_numerico ID ')'              {agregarError("ERROR: Parametro invalido, el formato correcto es: '(' tipo_numerico ID ')' o '(' ')'");}   
-            | '(' tipo_numerico ID              {agregarError("ERROR: Parametro invalido, el formato correcto es: '(' tipo_numerico ID ')' o '(' ')'");}
+parametro:	'(' tipo_numerico ID ')'            {analizador_semantico.registrarAmbitoUsoID($3.sval, "nombre_parametro_formal"); analizador_semantico.eliminarEntradaOriginalID($3.sval); analizador_semantico.registrarTipoID($2.sval, $3.sval);}
+            | '(' ')'                       
+            | tipo_numerico ID ')'              {agregarError("ERROR: Parametro invalido, el formato correcto es: '(' tipo_numerico ID ')' o '(' ')'"); analizador_semantico.registrarAmbitoUsoID($2.sval, "nombre_parametro_formal"); analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.registrarTipoID($1.sval, $2.sval);}   
+            | '(' tipo_numerico ID              {agregarError("ERROR: Parametro invalido, el formato correcto es: '(' tipo_numerico ID ')' o '(' ')'"); analizador_semantico.registrarAmbitoUsoID($3.sval, "nombre_parametro_formal"); analizador_semantico.eliminarEntradaOriginalID($3.sval); analizador_semantico.registrarTipoID($2.sval, $3.sval);}
             | '(' error ')'                     {agregarError("ERROR: Parametro invalido, el formato correcto es: '(' tipo_numerico ID ')' o '(' ')'");}
 
 ;
@@ -127,7 +127,7 @@ lista_declaraciones_funciones:      lista_declaraciones_funciones declaracion_fu
 
 ;
 
-declaracion_funcion:	encabezado_metodo parametro cuerpo_funcion ','        {System.out.print("(DECLARACION DE FUNCION) "); actualizarAmbitoActual("-");}
+declaracion_funcion:	encabezado_metodo parametro cuerpo_funcion ','        {System.out.print("(DECLARACION DE FUNCION) "); analizador_semantico.verificarPosibleImplementacionFuncionInterfaz($1.sval); analizador_semantico.actualizarAmbitoActual("-"); analizador_semantico.verificarCantidadAnidamientos($1.sval);}
 
 ;
 
@@ -150,16 +150,16 @@ lista_sentencias_funcion:       lista_sentencias_funcion sentencia
 
 ;
 
-declaracion_clase:  encabezado_clase cuerpo_clase           {System.out.print("(DECLARACION DE CLASE) ");}
+declaracion_clase:  encabezado_clase cuerpo_clase           {System.out.print("(DECLARACION DE CLASE) "); analizador_semantico.chequearImplementacionTotalInterfaz($1.sval); analizador_semantico.actualizarAmbitoActual("()");}
 
 ;
 
-encabezado_clase:   CLASS ID                            
-                    | CLASS ID IMPLEMENT ID            
-                    | CLASS error                           {agregarError("ERROR: Encabezado de clase invalido, los formatos correctos son: CLASS ID y CLASS ID IMPLEMENT ID");}
-                    | CLASS IMPLEMENT error                 {agregarError("ERROR: Encabezado de clase invalido, los formatos correctos son: CLASS ID y CLASS ID IMPLEMENT ID");}
-                    | CLASS ID IMPLEMENT error              {agregarError("ERROR: Encabezado de clase invalido, los formatos correctos son: CLASS ID y CLASS ID IMPLEMENT ID");}
-                    | CLASS IMPLEMENT ID  error             {agregarError("ERROR: Encabezado de clase invalido, los formatos correctos son: CLASS ID y CLASS ID IMPLEMENT ID");}
+encabezado_clase:   CLASS ID                                {analizador_semantico.registrarAmbitoUsoID($2.sval, "nombre_clase"); analizador_semantico.actualizarAmbitoActual("(" + $2.sval + ")"); $$.sval = $2.sval;}
+                    | CLASS ID IMPLEMENT ID                 {analizador_semantico.registrarAmbitoUsoID($2.sval, "nombre_clase"); analizador_semantico.registrarInterfazImplementada($2.sval, $4.sval); analizador_semantico.actualizarAmbitoActual("(" + $2.sval + ")"); analizador_semantico.eliminarEntradaOriginalID($4.sval); $$.sval = $2.sval;}
+                    | CLASS error                           {agregarError("ERROR: Encabezado de clase invalido, los formatos correctos son: CLASS ID y CLASS ID IMPLEMENT ID"); analizador_semantico.marcarAmbitoInvalido("()"); $$.sval = null;}
+                    | CLASS IMPLEMENT error                 {agregarError("ERROR: Encabezado de clase invalido, los formatos correctos son: CLASS ID y CLASS ID IMPLEMENT ID"); analizador_semantico.marcarAmbitoInvalido("()"); $$.sval = null;}
+                    | CLASS ID IMPLEMENT error              {agregarError("ERROR: Encabezado de clase invalido, los formatos correctos son: CLASS ID y CLASS ID IMPLEMENT ID"); analizador_semantico.registrarAmbitoUsoID($2.sval, "nombre_clase"); analizador_semantico.actualizarAmbitoActual("(" + $2.sval + ")"); $$.sval = $2.sval;}
+                    | CLASS IMPLEMENT ID  error             {agregarError("ERROR: Encabezado de clase invalido, los formatos correctos son: CLASS ID y CLASS ID IMPLEMENT ID"); analizador_semantico.eliminarEntradaOriginalID($3.sval); analizador_semantico.marcarAmbitoInvalido("()"); $$.sval = null;}
                     
 ;
 
@@ -168,18 +168,18 @@ cuerpo_clase:   bloque_sentencias_declarativas ','
 
 ;
 
-declaracion_clausula_impl:  encabezado_clausula_impl cuerpo_clausula_impl      {System.out.print("(DECLARACION DE CLAUSULA IMPL) ");}
+declaracion_clausula_impl:  encabezado_clausula_impl cuerpo_clausula_impl      {System.out.print("(DECLARACION DE CLAUSULA IMPL) "); analizador_semantico.actualizarAmbitoActual("<>");}
 
 ;
 
-encabezado_clausula_impl:   IMPL FOR ID ':'     
-                            | IMPL FOR ':' error        {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'");}
-                            | IMPL ID ':' error         {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'");}
-                            | IMPL ':' error            {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'");}
-                            | IMPL FOR ID error         {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'");}
-                            | IMPL FOR error            {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'");}
-                            | IMPL ID error             {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'");}
-                            | IMPL error                {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'");}
+encabezado_clausula_impl:   IMPL FOR ID ':'             {analizador_semantico.eliminarEntradaOriginalID($3.sval); analizador_semantico.chequearValidezClausulaIMPL($3.sval); analizador_semantico.actualizarAmbitoActual("<" + $3.sval + ">");}
+                            | IMPL FOR ':' error        {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'"); analizador_semantico.marcarAmbitoInvalido("<>");}
+                            | IMPL ID ':' error         {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'"); analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.chequearValidezClausulaIMPL($2.sval); analizador_semantico.actualizarAmbitoActual("<" + $2.sval + ">");}
+                            | IMPL ':' error            {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'"); analizador_semantico.marcarAmbitoInvalido("<>");}
+                            | IMPL FOR ID error         {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'"); analizador_semantico.eliminarEntradaOriginalID($3.sval); analizador_semantico.chequearValidezClausulaIMPL($3.sval); analizador_semantico.actualizarAmbitoActual("<" + $3.sval + ">");}
+                            | IMPL FOR error            {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'"); analizador_semantico.marcarAmbitoInvalido("<>");}
+                            | IMPL ID error             {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'"); analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.chequearValidezClausulaIMPL($2.sval); analizador_semantico.actualizarAmbitoActual("<" + $2.sval + ">");}
+                            | IMPL error                {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'"); analizador_semantico.marcarAmbitoInvalido("<>");}
 
 ;
 
@@ -188,12 +188,12 @@ cuerpo_clausula_impl:       bloque_declaraciones_funciones ','
 
 ;
 
-declaracion_interfaz:   encabezado_interfaz cuerpo_interfaz             {System.out.print("(DECLARACION DE INTERFAZ) ");}
+declaracion_interfaz:   encabezado_interfaz cuerpo_interfaz             {System.out.print("(DECLARACION DE INTERFAZ) "); analizador_semantico.registrarCantidadPrototiposInterfaz($1.sval); analizador_semantico.actualizarAmbitoActual("[]");}
 
 ;
 
-encabezado_interfaz:    INTERFACE ID
-                        | INTERFACE     {agregarError("ERROR: Encabezado de interfaz invalido, el formato correcto es: INTERFACE ID");}
+encabezado_interfaz:    INTERFACE ID    {analizador_semantico.registrarAmbitoUsoID($2.sval, "nombre_interfaz"); analizador_semantico.actualizarAmbitoActual("[" + $2.sval + "]"); $$.sval = $2.sval;}
+                        | INTERFACE     {agregarError("ERROR: Encabezado de interfaz invalido, el formato correcto es: INTERFACE ID"); analizador_semantico.marcarAmbitoInvalido("[]");}
 
 ;
 
@@ -230,7 +230,7 @@ bloque_sentencias_ejecutables:	'{' lista_sentencias_ejecutables '}'
 
 lista_sentencias_ejecutables:   lista_sentencias_ejecutables sentencia_ejecutable
 				                | sentencia_ejecutable
-                                | sentencia_declarativa     {agregarError("ERROR: No puede haber sentencias declarativas, en este bloque solo se aceptan sentencias ejecutables");}
+                                | sentencia_declarativa                                 {agregarError("ERROR: No puede haber sentencias declarativas, en este bloque solo se aceptan sentencias ejecutables");}
                                 | lista_sentencias_ejecutables sentencia_declarativa    {agregarError("ERROR: No puede haber sentencias declarativas, en este bloque solo se aceptan sentencias ejecutables");}
 
 ;
@@ -257,28 +257,28 @@ asignacion: referencia '=' expresion_aritmetica ','                         {Sys
 
 ;
 
-expresion_aritmetica:	expresion_aritmetica '+' termino
-                        | expresion_aritmetica '-' termino
-                        | termino
+expresion_aritmetica:	expresion_aritmetica '+' termino            {$$.sval = $1.sval + " " + "+" + " " + $3.sval;}
+                        | expresion_aritmetica '-' termino          {$$.sval = $1.sval + " " + "-" + " " + $3.sval;}          
+                        | termino                                   {$$.sval = $1.sval;}
 
 ;
 
-termino:	termino '*' factor
-            | termino '/' factor
-            | factor
+termino:	termino '*' factor      {$$.sval = $1.sval + " " + "*" + " " + $3.sval;}
+            | termino '/' factor    {$$.sval = $1.sval + " " + "/" + " " + $3.sval;}
+            | factor                {$$.sval = $1.sval;}
 
 ;
 
-factor:		referencia
-		    | constante
+factor:		referencia          {$$.sval = $1.sval;}
+		    | constante         {$$.sval = $1.sval;}
 
 ;
 
-constante:	CONSTANTE_I         {verificarRango($1.sval);}
-            | '-' CONSTANTE_I   {analizador_lexico.constanteNegativaDetectada($2.sval);}
-            | CONSTANTE_UL
-            | CONSTANTE_PF
-            | '-' CONSTANTE_PF  {analizador_lexico.constanteNegativaDetectada($2.sval);}
+constante:	CONSTANTE_I         {verificarRango($1.sval); analizador_semantico.chequearValidezSimbolo($1.sval); $$.sval = $1.sval;}
+            | '-' CONSTANTE_I   {analizador_lexico.constanteNegativaDetectada($2.sval); analizador_semantico.chequearValidezSimbolo("-" + $2.sval); analizador_semantico.registrarTipoConstante("INT", "-" + $2.sval); $$.sval = "-" + $2.sval;}
+            | CONSTANTE_UL      {analizador_semantico.registrarTipoConstante("ULONG", $1.sval); analizador_semantico.chequearValidezSimbolo($1.sval); $$.sval = $1.sval;}      
+            | CONSTANTE_PF      {analizador_semantico.registrarTipoConstante("DOUBLE", $1.sval); analizador_semantico.chequearValidezSimbolo($1.sval); $$.sval = $1.sval;}
+            | '-' CONSTANTE_PF  {analizador_lexico.constanteNegativaDetectada($2.sval); analizador_semantico.chequearValidezSimbolo("-" + $2.sval); analizador_semantico.registrarTipoConstante("DOUBLE", "-" + $2.sval); $$.sval = "-" + $2.sval;}
 
 ;
 
@@ -286,8 +286,8 @@ invocacion_funcion:	    referencia parametro_real ','       {System.out.print("(
 
 ;
 
-referencia:	referencia '.' ID
-		    | ID
+referencia:	referencia '.' ID                       {analizador_semantico.eliminarEntradaOriginalID($3.sval);}
+		    | ID                                    {analizador_semantico.eliminarEntradaOriginalID($1.sval); analizador_semantico.verificarVariableFuncionReferenciada($1.sval, )}
 
 ;
 
@@ -362,7 +362,7 @@ comparacion:	expresion_aritmetica '>' expresion_aritmetica
 
 ;
 
-salida_mensaje:	    PRINT CADENA_CARACTERES ','     {System.out.print("(SALIDA DE MENSAJE) ");}
+salida_mensaje:	    PRINT CADENA_CARACTERES ','     {System.out.print("(SALIDA DE MENSAJE) "); analizador_semantico.chequearValidezSimbolo($2.sval);}
                     | PRINT ','                     {System.out.print("(SALIDA DE MENSAJE) "); agregarError("ERROR: Salida de mensaje invalida, el formato correcto es: PRINT CADENA_CARACTERES ','");}
 
 ;
@@ -388,10 +388,10 @@ cuerpo_for_retorno:     sentencia_ejecutable_de_return_parcial
 
 ;
 
-encabezado_for:     FOR ID IN RANGE    
-                    | FOR ID RANGE      {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
-                    | FOR ID IN         {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
-                    | FOR ID            {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
+encabezado_for:     FOR ID IN RANGE     {analizador_semantico.eliminarEntradaOriginalID($2.sval);}
+                    | FOR ID RANGE      {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval);}
+                    | FOR ID IN         {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval);}
+                    | FOR ID            {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval);}
                     | FOR IN RANGE      {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
                     | FOR IN            {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
                     | FOR RANGE         {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
@@ -467,8 +467,7 @@ void verificarRango(String constante) {
         agregarError("ERROR: Constante entera simple fuera de rango");
         analizador_lexico.eliminarConstanteTS(constante);
     }
+    else
+        analizador_semantico.registrarTipoConstante("INT", constante);
 }
 
-void actualizarAmbitoActual(String ambito_nuevo) {
-    analizador_semantico.actualizarAmbitoActual(ambito_nuevo);
-}

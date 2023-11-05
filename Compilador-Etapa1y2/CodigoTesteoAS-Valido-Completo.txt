@@ -16,30 +16,30 @@
 			RETURN,
 		},										*{Se deberia detectar para linea 17: "DECLARACION DE FUNCION"}*
 	},											*{Se deberia detectar para linea 18: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*											
-
+	
 	INTERFACE interfaz {
 		VOID funcion_interfaz (INT numero),		*{Se deberia detectar para linea 21: "DECLARACION DE PROTOTIPO DE FUNCION"}*
-	},											*{Se deberia detectar para linea 22: "DECLARACION DE INTERFAZ CON BLOQUE DE PROTOTIPOS"}*
+	},							*{Se deberia detectar para linea 22: "DECLARACION DE INTERFAZ CON BLOQUE DE PROTOTIPOS"}*
 
 	CLASS c2 {
 		c1,							*{Se deberia detectar para linea 25: "DECLARACION DE REFERENCIA A CLASE"}*			
 
 		VOID funcion_c2(),			*{Se deberia detectar para linea 27: "DECLARACION DE PROTOTIPO DE FUNCION"}*
-	},								*{Se deberia detectar para linea 28: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*
-
+	},
+	
 	IMPL FOR c2: {
 		VOID funcion_c2() {
 			RETURN,
-		},							*{Se deberia detectar para linea 33: "DECLARACION DE FUNCION"}*		
-	},								*{Se deberia detectar para linea 34: "DECLARACION DE CLAUSULA IMPL CON BLOQUE DE FUNCIONES IMPLEMENTADAS"}*
+		},					*{Se deberia detectar para linea 33: "DECLARACION DE FUNCION"}*
+	},						*{Se deberia detectar para linea 34: "DECLARACION DE CLAUSULA IMPL CON BLOQUE DE FUNCIONES IMPLEMENTADAS"}*								*{Se deberia detectar para linea 28: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*
 
-	INT int1; int2; int3 ,					*{Se deberia detectar para linea 36: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*		
-	DOUBLE double1; double2; double3 ,		*{Se deberia detectar para linea 37: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
+	INT int1; int2; int3 ,						*{Se deberia detectar para linea 36: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*		
+	DOUBLE double1; double2; double3 ,				*{Se deberia detectar para linea 37: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
 
 	VOID funcion1 (ULONG parametro) {
 		RETURN,
 	},										*{Se deberia detectar para linea 41: "DECLARACION DE FUNCION"}*	
-
+	
 	VOID funcion2 ()
 	{
 		double3 -= -5_i + double1 * 1.,		*{Se deberia detectar para linea 45: "ASIGNACION USANDO OPERADOR DE MENOS IGUAL"}*

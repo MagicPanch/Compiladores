@@ -159,7 +159,23 @@ public class AnalizadorLexico {
 		System.out.println("------------------------TABLA DE SIMBOLOS------------------------");
 		System.out.println();
 		for (String key: simbolos.keySet()) {
-			System.out.println("Lexema: " + key + " - Token: " + simbolos.get(key).getToken());
+			AtributosSimbolo atributos_simbolo = simbolos.get(key);
+			String uso = atributos_simbolo.getUso();
+			if (uso == null)
+				uso = "-";
+			String tipo = atributos_simbolo.getTipo();
+			if (tipo == null)
+				tipo = "-";
+			String lexema_funcion_implementacion = atributos_simbolo.getLexemaFuncionImplementacion();
+			if (lexema_funcion_implementacion == null)
+				lexema_funcion_implementacion = "-";
+			String lexema_interfaz_implementada = atributos_simbolo.getLexemaInterfazImplementada();
+			if (lexema_interfaz_implementada == null)
+				lexema_interfaz_implementada = "-";
+			String nombre_parametro_formal = atributos_simbolo.getNombreParametroFormal();
+			if (nombre_parametro_formal == null)
+				nombre_parametro_formal = "-";
+			System.out.println("Lexema: " + key + " / Token: " + atributos_simbolo.getToken() + " / Uso: " + uso + " / Tipo: " + tipo + " / Lexema de funcion implementadora: " + lexema_funcion_implementacion + " / Cantidad de prototipos: " + atributos_simbolo.getCantidadPrototipos() + " / Lexema de interfaz implementada: " + lexema_interfaz_implementada + " / Parametro formal: " + nombre_parametro_formal);
 		}
 		System.out.println();	
 	}
