@@ -3,6 +3,7 @@ package analizadorSintactico.analizadorLexico;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -175,7 +176,23 @@ public class AnalizadorLexico {
 			String nombre_parametro_formal = atributos_simbolo.getNombreParametroFormal();
 			if (nombre_parametro_formal == null)
 				nombre_parametro_formal = "-";
-			System.out.println("Lexema: " + key + " / Token: " + atributos_simbolo.getToken() + " / Uso: " + uso + " / Tipo: " + tipo + " / Lexema de funcion implementadora: " + lexema_funcion_implementacion + " / Cantidad de prototipos: " + atributos_simbolo.getCantidadPrototipos() + " / Lexema de interfaz implementada: " + lexema_interfaz_implementada + " / Parametro formal: " + nombre_parametro_formal);
+			String lexema_clase_asociada = atributos_simbolo.getLexemaClaseAsociada();
+			if (lexema_clase_asociada == null)
+				lexema_clase_asociada = "-";
+			ArrayList<String> lexemas_clases_heredadas = atributos_simbolo.getClasesHeredadas();
+			String clases_heredadas = "";
+			int cantidad_clases_heredadas = lexemas_clases_heredadas.size();
+			if (cantidad_clases_heredadas == 0)
+				clases_heredadas = "-";
+			else {
+				for (int i = 0; i < cantidad_clases_heredadas; i++)
+					if (i < cantidad_clases_heredadas-1)
+						clases_heredadas += lexemas_clases_heredadas.get(i) + ", ";
+					else
+						clases_heredadas += lexemas_clases_heredadas.get(i);
+			}
+			System.out.println("Lexema: " + key + " / Token: " + atributos_simbolo.getToken() + " / Uso: " + uso + " / Tipo: " + tipo + " / Lexema de funcion implementadora: " + lexema_funcion_implementacion + " / Cantidad de prototipos: " + atributos_simbolo.getCantidadPrototipos() + " / Lexema de interfaz implementada: " + lexema_interfaz_implementada + " / Parametro formal: " + nombre_parametro_formal + " / Lexema clase asociada: " + lexema_clase_asociada + " / Clases heredadas: " + clases_heredadas);
+			System.out.println();
 		}
 		System.out.println();	
 	}

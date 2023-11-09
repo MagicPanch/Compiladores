@@ -9,12 +9,12 @@
 
 %%
 
-programa:	bloque_sentencias               {System.out.print("(PROGRAMA) "); analizador_semantico.actualizarAmbitoActual("-");}
+programa:	bloque_sentencias               {System.out.print("(PROGRAMA) "); analizador_semantico.actualizarAmbitoActual("-"); analizador_semantico.verificarReferenciasVariablesEnAsignaciones();}
 		    | '{' '}'                       {System.out.print("(PROGRAMA VACIO) ");}
-            | error bloque_sentencias       {System.out.print("(PROGRAMA) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-");}
+            | error bloque_sentencias       {System.out.print("(PROGRAMA) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); analizador_semantico.verificarReferenciasVariablesEnAsignaciones();}
             | error '{' '}'                 {System.out.print("(PROGRAMA VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-");}
             | error '{' '}' error           {System.out.print("(PROGRAMA VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-");}      
-            | bloque_sentencias error       {System.out.print("(PROGRAMA) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-");}
+            | bloque_sentencias error       {System.out.print("(PROGRAMA) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); analizador_semantico.verificarReferenciasVariablesEnAsignaciones();}
             | '{' '}' error                 {System.out.print("(PROGRAMA VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-");}
 
 ;
@@ -79,7 +79,7 @@ lista_variables:	lista_variables ';' ID      {analizador_semantico.registrarAmbi
 
 ;
 
-declaracion_referencia_clase:   ID ','      {System.out.print("(DECLARACION DE REFERENCIA A CLASE) "); analizador_semantico.eliminarEntradaOriginalID($1.sval);}
+declaracion_referencia_clase:   ID ','      {System.out.print("(DECLARACION DE REFERENCIA A CLASE) "); analizador_semantico.registrarAmbitoUsoID($1.sval, "referencia_clase");}
 
 ;
 
@@ -108,11 +108,11 @@ encabezado_metodo:      VOID ID         {analizador_semantico.registrarAmbitoUso
 
 ; 
 
-parametro:	'(' tipo_numerico ID ')'            {analizador_semantico.registrarAmbitoUsoID($3.sval, "nombre_parametro_formal"); analizador_semantico.eliminarEntradaOriginalID($3.sval); analizador_semantico.registrarTipoID($2.sval, $3.sval);}
-            | '(' ')'                       
-            | tipo_numerico ID ')'              {agregarError("ERROR: Parametro invalido, el formato correcto es: '(' tipo_numerico ID ')' o '(' ')'"); analizador_semantico.registrarAmbitoUsoID($2.sval, "nombre_parametro_formal"); analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.registrarTipoID($1.sval, $2.sval);}   
-            | '(' tipo_numerico ID              {agregarError("ERROR: Parametro invalido, el formato correcto es: '(' tipo_numerico ID ')' o '(' ')'"); analizador_semantico.registrarAmbitoUsoID($3.sval, "nombre_parametro_formal"); analizador_semantico.eliminarEntradaOriginalID($3.sval); analizador_semantico.registrarTipoID($2.sval, $3.sval);}
-            | '(' error ')'                     {agregarError("ERROR: Parametro invalido, el formato correcto es: '(' tipo_numerico ID ')' o '(' ')'");}
+parametro:	'(' tipo_numerico ID ')'            {analizador_semantico.registrarAmbitoUsoID($3.sval, "nombre_parametro_formal"); analizador_semantico.eliminarEntradaOriginalID($3.sval); analizador_semantico.registrarTipoID($2.sval, $3.sval); analizador_semantico.chequearParametroFuncionIMPL($3.sval, $2.sval);}
+            | '(' ')'                           {analizador_semantico.chequearParametroFuncionIMPL(null, null);}
+            | tipo_numerico ID ')'              {agregarError("ERROR: Parametro invalido, el formato correcto es: '(' tipo_numerico ID ')' o '(' ')'"); analizador_semantico.registrarAmbitoUsoID($2.sval, "nombre_parametro_formal"); analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.registrarTipoID($1.sval, $2.sval); analizador_semantico.chequearParametroFuncionIMPL($2.sval, $1.sval);}   
+            | '(' tipo_numerico ID              {agregarError("ERROR: Parametro invalido, el formato correcto es: '(' tipo_numerico ID ')' o '(' ')'"); analizador_semantico.registrarAmbitoUsoID($3.sval, "nombre_parametro_formal"); analizador_semantico.eliminarEntradaOriginalID($3.sval); analizador_semantico.registrarTipoID($2.sval, $3.sval); analizador_semantico.chequearParametroFuncionIMPL($3.sval, $2.sval);}
+            | '(' error ')'                     {agregarError("ERROR: Parametro invalido, el formato correcto es: '(' tipo_numerico ID ')' o '(' ')'"); analizador_semantico.actualizarAmbitoActual("-") ; analizador_semantico.marcarAmbitoInvalido(":"); analizador_semantico.chequearParametroFuncionIMPL(null, null);}
 
 ;
 
@@ -252,8 +252,8 @@ bloque_sentencias_ejecutables_de_return_completo:       '{' lista_sentencias_eje
 
 ;
 
-asignacion: referencia '=' expresion_aritmetica ','                         {System.out.print("(ASIGNACION USANDO OPERADOR DE IGUAL) ");}
-		    | referencia ASIGNADOR_MENOS_IGUAL expresion_aritmetica ','     {System.out.print("(ASIGNACION USANDO OPERADOR DE MENOS IGUAL) ");}                  
+asignacion: referencia '=' expresion_aritmetica ','                         {System.out.print("(ASIGNACION USANDO OPERADOR DE IGUAL) "); analizador_semantico.verificarReferenciaValida($1.sval, false); analizador_semantico.registrarReferenciasLadoDerechoAsignacion($3.sval);}
+		    | referencia ASIGNADOR_MENOS_IGUAL expresion_aritmetica ','     {System.out.print("(ASIGNACION USANDO OPERADOR DE MENOS IGUAL) "); analizador_semantico.verificarReferenciaValida($1.sval, false); analizador_semantico.registrarReferenciasLadoDerechoAsignacion($3.sval);}                  
 
 ;
 
@@ -269,7 +269,7 @@ termino:	termino '*' factor      {$$.sval = $1.sval + " " + "*" + " " + $3.sval;
 
 ;
 
-factor:		referencia          {$$.sval = $1.sval;}
+factor:		referencia          {$$.sval = analizador_semantico.verificarReferenciaValida($1.sval, false);}
 		    | constante         {$$.sval = $1.sval;}
 
 ;
@@ -282,12 +282,12 @@ constante:	CONSTANTE_I         {verificarRango($1.sval); analizador_semantico.ch
 
 ;
 
-invocacion_funcion:	    referencia parametro_real ','       {System.out.print("(INVOCACION A FUNCION) ");}
+invocacion_funcion:	    referencia parametro_real ','       {System.out.print("(INVOCACION A FUNCION) "); analizador_semantico.verificarReferenciaValida($1.sval, true);}
 
 ;
 
-referencia:	referencia '.' ID                       {analizador_semantico.eliminarEntradaOriginalID($3.sval);}
-		    | ID                                    {analizador_semantico.eliminarEntradaOriginalID($1.sval); analizador_semantico.verificarVariableFuncionReferenciada($1.sval, )}
+referencia:	referencia '.' ID                       {analizador_semantico.eliminarEntradaOriginalID($3.sval); $$.sval = $1.sval + "." + $3.sval;}
+		    | ID                                    {analizador_semantico.eliminarEntradaOriginalID($1.sval); $$.sval = $1.sval;}
 
 ;
 
@@ -388,10 +388,10 @@ cuerpo_for_retorno:     sentencia_ejecutable_de_return_parcial
 
 ;
 
-encabezado_for:     FOR ID IN RANGE     {analizador_semantico.eliminarEntradaOriginalID($2.sval);}
-                    | FOR ID RANGE      {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval);}
-                    | FOR ID IN         {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval);}
-                    | FOR ID            {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval);}
+encabezado_for:     FOR ID IN RANGE     {analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.verificarReferenciaValida($2.sval, false); analizador_semantico.verificarValidezVariableControlFor($2.sval);}
+                    | FOR ID RANGE      {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.verificarReferenciaValida($2.sval, false); analizador_semantico.verificarValidezVariableControlFor($2.sval);}
+                    | FOR ID IN         {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.verificarReferenciaValida($2.sval, false); analizador_semantico.verificarValidezVariableControlFor($2.sval);}
+                    | FOR ID            {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.verificarReferenciaValida($2.sval, false); analizador_semantico.verificarValidezVariableControlFor($2.sval);}
                     | FOR IN RANGE      {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
                     | FOR IN            {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
                     | FOR RANGE         {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
@@ -399,10 +399,10 @@ encabezado_for:     FOR ID IN RANGE     {analizador_semantico.eliminarEntradaOri
 
 ;
 
-control_rango_iteraciones:      '(' constante ';' constante ';' constante ')'
-                                | constante ';' constante ';' constante ')'     {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'");}
-                                | '(' constante ';' constante ';' constante     {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'");}
-                                | constante ';' constante ';' constante         {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'");}
+control_rango_iteraciones:      '(' constante ';' constante ';' constante ')'   {analizador_semantico.verificarConstantesControlFor($2.sval, $4.sval, $6.sval);}
+                                | constante ';' constante ';' constante ')'     {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); analizador_semantico.verificarConstantesControlFor($1.sval, $3.sval, $5.sval);}
+                                | '(' constante ';' constante ';' constante     {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); analizador_semantico.verificarConstantesControlFor($2.sval, $4.sval, $6.sval);}
+                                | constante ';' constante ';' constante         {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); analizador_semantico.verificarConstantesControlFor($1.sval, $3.sval, $5.sval);}
                                 | '(' error ')'                                 {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'");}       
 
 ;

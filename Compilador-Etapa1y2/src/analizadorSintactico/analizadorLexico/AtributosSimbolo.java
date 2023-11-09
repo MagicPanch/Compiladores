@@ -1,5 +1,7 @@
 package analizadorSintactico.analizadorLexico;
 
+import java.util.ArrayList;
+
 public class AtributosSimbolo {
 	private int token;
 	private int cantidad = -1; //ya que solo para las constantes y las cadenas de caracteres tiene sentido almacenar la cantidad de repeticiones (para las cadenas tiene sentido para un chequeo semantico que implica quitarlas de la tabla de simbolos en ciertos casos)
@@ -10,6 +12,8 @@ public class AtributosSimbolo {
 	private String lexema_interfaz_implementada = null;
 	private String nombre_parametro_formal = null;
 	private boolean variable_referenciada = false;
+	private String lexema_clase_asociada = null;
+	private ArrayList<String> lexemas_clases_heredadas = new ArrayList<String>(); //sirve para almacenar el conjunto de clases heredadas por composicion por otra clase (sirve para chequeos semanticos)
 	
 	public AtributosSimbolo(int token) {
 		this.token = token;
@@ -97,12 +101,28 @@ public class AtributosSimbolo {
 	}
 
 	public boolean fueReferenciada() {
-		return variable_referenciada;
+		return this.variable_referenciada;
 	}
 
 	public void variableReferenciada() {
-		variable_referenciada = true;
+		this.variable_referenciada = true;
 	}
+
+	public String getLexemaClaseAsociada() {
+		return lexema_clase_asociada;
+	}
+
+	public void setLexemaClaseAsociada(String lexema_clase_asociada) {
+		this.lexema_clase_asociada = lexema_clase_asociada;
+	}
+	
+	public void agregarClaseHeredada(String clase) {
+		this.lexemas_clases_heredadas.add(clase);
+	}
+	
+	public ArrayList<String> getClasesHeredadas() {
+		return this.lexemas_clases_heredadas;
+	} 
 
 	public void incrementarCantidad() {
 		cantidad++;
