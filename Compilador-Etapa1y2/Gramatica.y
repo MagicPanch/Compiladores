@@ -193,7 +193,7 @@ declaracion_interfaz:   encabezado_interfaz cuerpo_interfaz             {System.
 ;
 
 encabezado_interfaz:    INTERFACE ID    {analizador_semantico.registrarAmbitoUsoID($2.sval, "nombre_interfaz"); analizador_semantico.actualizarAmbitoActual("[" + $2.sval + "]"); $$.sval = $2.sval;}
-                        | INTERFACE     {agregarError("ERROR: Encabezado de interfaz invalido, el formato correcto es: INTERFACE ID"); analizador_semantico.marcarAmbitoInvalido("[]");}
+                        | INTERFACE     {agregarError("ERROR: Encabezado de interfaz invalido, el formato correcto es: INTERFACE ID"); analizador_semantico.marcarAmbitoInvalido("[]"); $$.sval = null;}
 
 ;
 
@@ -252,24 +252,24 @@ bloque_sentencias_ejecutables_de_return_completo:       '{' lista_sentencias_eje
 
 ;
 
-asignacion: referencia '=' expresion_aritmetica ','                         {System.out.print("(ASIGNACION USANDO OPERADOR DE IGUAL) "); analizador_semantico.verificarReferenciaValida($1.sval, false); analizador_semantico.registrarReferenciasLadoDerechoAsignacion($3.sval);}
-		    | referencia ASIGNADOR_MENOS_IGUAL expresion_aritmetica ','     {System.out.print("(ASIGNACION USANDO OPERADOR DE MENOS IGUAL) "); analizador_semantico.verificarReferenciaValida($1.sval, false); analizador_semantico.registrarReferenciasLadoDerechoAsignacion($3.sval);}                  
+asignacion: referencia '=' expresion_aritmetica ','                         {System.out.print("(ASIGNACION USANDO OPERADOR DE IGUAL) "); analizador_semantico.registrarReferenciasLadoDerechoAsignacion($3.sval); analizador_semantico.chequearAsignacionValida(analizador_semantico.verificarReferenciaValida($1.sval, false), $3.sval);}
+		    | referencia ASIGNADOR_MENOS_IGUAL expresion_aritmetica ','     {System.out.print("(ASIGNACION USANDO OPERADOR DE MENOS IGUAL) "); analizador_semantico.registrarReferenciasLadoDerechoAsignacion($3.sval); analizador_semantico.chequearAsignacionValida(analizador_semantico.verificarReferenciaValida($1.sval, false), $3.sval);}                  
 
 ;
 
-expresion_aritmetica:	expresion_aritmetica '+' termino            {$$.sval = $1.sval + " " + "+" + " " + $3.sval;}
-                        | expresion_aritmetica '-' termino          {$$.sval = $1.sval + " " + "-" + " " + $3.sval;}          
+expresion_aritmetica:	expresion_aritmetica '+' termino            {$$.sval = $1.sval + " " + "+" + " " + $3.sval; analizador_semantico.chequearValidezOperacionComparacionExpresiones($1.sval, $3.sval, false, true);}
+                        | expresion_aritmetica '-' termino          {$$.sval = $1.sval + " " + "-" + " " + $3.sval; analizador_semantico.chequearValidezOperacionComparacionExpresiones($1.sval, $3.sval, false, false);}          
                         | termino                                   {$$.sval = $1.sval;}
 
 ;
 
-termino:	termino '*' factor      {$$.sval = $1.sval + " " + "*" + " " + $3.sval;}
-            | termino '/' factor    {$$.sval = $1.sval + " " + "/" + " " + $3.sval;}
+termino:	termino '*' factor      {$$.sval = $1.sval + " " + "*" + " " + $3.sval; analizador_semantico.chequearValidezOperacionTerminoFactor($1.sval, $3.sval, true);}
+            | termino '/' factor    {$$.sval = $1.sval + " " + "/" + " " + $3.sval; analizador_semantico.chequearValidezOperacionTerminoFactor($1.sval, $3.sval, false);}
             | factor                {$$.sval = $1.sval;}
 
 ;
 
-factor:		referencia          {$$.sval = analizador_semantico.verificarReferenciaValida($1.sval, false);}
+factor:		referencia          {$$.sval = analizador_semantico.verificarReferenciaValida($1.sval, false); analizador_semantico.chequearTipoFactorValido($$.sval);}
 		    | constante         {$$.sval = $1.sval;}
 
 ;
@@ -282,7 +282,7 @@ constante:	CONSTANTE_I         {verificarRango($1.sval); analizador_semantico.ch
 
 ;
 
-invocacion_funcion:	    referencia parametro_real ','       {System.out.print("(INVOCACION A FUNCION) "); analizador_semantico.verificarReferenciaValida($1.sval, true);}
+invocacion_funcion:	    referencia parametro_real ','       {System.out.print("(INVOCACION A FUNCION) "); analizador_semantico.chequearInvocacionFuncionValida(analizador_semantico.verificarReferenciaValida($1.sval, true), $2.sval);}
 
 ;
 
@@ -291,9 +291,9 @@ referencia:	referencia '.' ID                       {analizador_semantico.elimin
 
 ;
 
-parametro_real:     '(' expresion_aritmetica ')'
-                    | '(' ')'
-                    | '(' error ')'                 {agregarError("ERROR: Parametro real invalido, el formato correcto es: '(' expresion_aritmetica ')' o '(' ')' ");}
+parametro_real:     '(' expresion_aritmetica ')'    {$$.sval = $2.sval;}
+                    | '(' ')'                       {$$.sval = null;}  
+                    | '(' error ')'                 {agregarError("ERROR: Parametro real invalido, el formato correcto es: '(' expresion_aritmetica ')' o '(' ')' "); $$.sval = null;}
 
 ;
 
@@ -353,12 +353,12 @@ condicion:      '(' comparacion ')'
 
 ;
 
-comparacion:	expresion_aritmetica '>' expresion_aritmetica
-                | expresion_aritmetica '<' expresion_aritmetica
-                | expresion_aritmetica COMP_MAYOR_IGUAL expresion_aritmetica
-                | expresion_aritmetica COMP_MENOR_IGUAL expresion_aritmetica
-                | expresion_aritmetica COMP_IGUAL expresion_aritmetica
-                | expresion_aritmetica COMP_DISTINTO expresion_aritmetica
+comparacion:	expresion_aritmetica '>' expresion_aritmetica                       {analizador_semantico.chequearValidezOperacionComparacionExpresiones($1.sval, $3.sval, true, false);}
+                | expresion_aritmetica '<' expresion_aritmetica                     {analizador_semantico.chequearValidezOperacionComparacionExpresiones($1.sval, $3.sval, true, false);}
+                | expresion_aritmetica COMP_MAYOR_IGUAL expresion_aritmetica        {analizador_semantico.chequearValidezOperacionComparacionExpresiones($1.sval, $3.sval, true, false);}
+                | expresion_aritmetica COMP_MENOR_IGUAL expresion_aritmetica        {analizador_semantico.chequearValidezOperacionComparacionExpresiones($1.sval, $3.sval, true, false);}
+                | expresion_aritmetica COMP_IGUAL expresion_aritmetica              {analizador_semantico.chequearValidezOperacionComparacionExpresiones($1.sval, $3.sval, true, false);}
+                | expresion_aritmetica COMP_DISTINTO expresion_aritmetica           {analizador_semantico.chequearValidezOperacionComparacionExpresiones($1.sval, $3.sval, true, false);}
 
 ;
 
@@ -367,7 +367,7 @@ salida_mensaje:	    PRINT CADENA_CARACTERES ','     {System.out.print("(SALIDA D
 
 ;
 
-sentencia_for:	encabezado_for control_rango_iteraciones cuerpo_for             {System.out.print("(SENTENCIA FOR) ");}
+sentencia_for:	encabezado_for control_rango_iteraciones cuerpo_for             {System.out.print("(SENTENCIA FOR) "); analizador_semantico.chequearCompatibilidadControladoresFor($1.sval, $2.sval);}
 
 ;
 
@@ -377,7 +377,7 @@ cuerpo_for:     sentencia_ejecutable
 
 ;
 
-sentencia_for_de_return:    encabezado_for control_rango_iteraciones cuerpo_for_retorno                 {System.out.print("(SENTENCIA FOR CON SENTENCIA EJECUTABLE DE RETORNO PARCIAL) ");}
+sentencia_for_de_return:    encabezado_for control_rango_iteraciones cuerpo_for_retorno                 {System.out.print("(SENTENCIA FOR CON SENTENCIA EJECUTABLE DE RETORNO PARCIAL) "); analizador_semantico.chequearCompatibilidadControladoresFor($1.sval, $2.sval);}
 
 ;
 
@@ -388,22 +388,22 @@ cuerpo_for_retorno:     sentencia_ejecutable_de_return_parcial
 
 ;
 
-encabezado_for:     FOR ID IN RANGE     {analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.verificarReferenciaValida($2.sval, false); analizador_semantico.verificarValidezVariableControlFor($2.sval);}
-                    | FOR ID RANGE      {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.verificarReferenciaValida($2.sval, false); analizador_semantico.verificarValidezVariableControlFor($2.sval);}
-                    | FOR ID IN         {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.verificarReferenciaValida($2.sval, false); analizador_semantico.verificarValidezVariableControlFor($2.sval);}
-                    | FOR ID            {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.verificarReferenciaValida($2.sval, false); analizador_semantico.verificarValidezVariableControlFor($2.sval);}
-                    | FOR IN RANGE      {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
-                    | FOR IN            {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
-                    | FOR RANGE         {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
-                    | FOR               {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
+encabezado_for:     FOR ID IN RANGE     {analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.verificarReferenciaValida($2.sval, false); analizador_semantico.verificarValidezVariableControlFor($2.sval); $$.sval = $2.sval;}
+                    | FOR ID RANGE      {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.verificarReferenciaValida($2.sval, false); analizador_semantico.verificarValidezVariableControlFor($2.sval); $$.sval = $2.sval;}
+                    | FOR ID IN         {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.verificarReferenciaValida($2.sval, false); analizador_semantico.verificarValidezVariableControlFor($2.sval); $$.sval = $2.sval;}
+                    | FOR ID            {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID($2.sval); analizador_semantico.verificarReferenciaValida($2.sval, false); analizador_semantico.verificarValidezVariableControlFor($2.sval); $$.sval = $2.sval;}
+                    | FOR IN RANGE      {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); $$.sval = null;}
+                    | FOR IN            {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); $$.sval = null;}
+                    | FOR RANGE         {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); $$.sval = null;}
+                    | FOR               {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); $$.sval = null;}
 
 ;
 
-control_rango_iteraciones:      '(' constante ';' constante ';' constante ')'   {analizador_semantico.verificarConstantesControlFor($2.sval, $4.sval, $6.sval);}
-                                | constante ';' constante ';' constante ')'     {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); analizador_semantico.verificarConstantesControlFor($1.sval, $3.sval, $5.sval);}
-                                | '(' constante ';' constante ';' constante     {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); analizador_semantico.verificarConstantesControlFor($2.sval, $4.sval, $6.sval);}
-                                | constante ';' constante ';' constante         {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); analizador_semantico.verificarConstantesControlFor($1.sval, $3.sval, $5.sval);}
-                                | '(' error ')'                                 {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'");}       
+control_rango_iteraciones:      '(' constante ';' constante ';' constante ')'   {$$.sval = analizador_semantico.verificarConstantesControlFor($2.sval, $4.sval, $6.sval);}
+                                | constante ';' constante ';' constante ')'     {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); $$.sval = analizador_semantico.verificarConstantesControlFor($1.sval, $3.sval, $5.sval);}
+                                | '(' constante ';' constante ';' constante     {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); $$.sval = analizador_semantico.verificarConstantesControlFor($2.sval, $4.sval, $6.sval);}
+                                | constante ';' constante ';' constante         {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); $$.sval = analizador_semantico.verificarConstantesControlFor($1.sval, $3.sval, $5.sval);}
+                                | '(' error ')'                                 {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); $$.sval = null;}       
 
 ;
 

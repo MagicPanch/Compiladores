@@ -1344,7 +1344,7 @@ case 98:
 break;
 case 99:
 //#line 196 "Gramatica.y"
-{agregarError("ERROR: Encabezado de interfaz invalido, el formato correcto es: INTERFACE ID"); analizador_semantico.marcarAmbitoInvalido("[]");}
+{agregarError("ERROR: Encabezado de interfaz invalido, el formato correcto es: INTERFACE ID"); analizador_semantico.marcarAmbitoInvalido("[]"); yyval.sval = null;}
 break;
 case 115:
 //#line 233 "Gramatica.y"
@@ -1356,19 +1356,19 @@ case 116:
 break;
 case 125:
 //#line 255 "Gramatica.y"
-{System.out.print("(ASIGNACION USANDO OPERADOR DE IGUAL) "); analizador_semantico.verificarReferenciaValida(val_peek(3).sval, false); analizador_semantico.registrarReferenciasLadoDerechoAsignacion(val_peek(1).sval);}
+{System.out.print("(ASIGNACION USANDO OPERADOR DE IGUAL) "); analizador_semantico.registrarReferenciasLadoDerechoAsignacion(val_peek(1).sval); analizador_semantico.chequearAsignacionValida(analizador_semantico.verificarReferenciaValida(val_peek(3).sval, false), val_peek(1).sval);}
 break;
 case 126:
 //#line 256 "Gramatica.y"
-{System.out.print("(ASIGNACION USANDO OPERADOR DE MENOS IGUAL) "); analizador_semantico.verificarReferenciaValida(val_peek(3).sval, false); analizador_semantico.registrarReferenciasLadoDerechoAsignacion(val_peek(1).sval);}
+{System.out.print("(ASIGNACION USANDO OPERADOR DE MENOS IGUAL) "); analizador_semantico.registrarReferenciasLadoDerechoAsignacion(val_peek(1).sval); analizador_semantico.chequearAsignacionValida(analizador_semantico.verificarReferenciaValida(val_peek(3).sval, false), val_peek(1).sval);}
 break;
 case 127:
 //#line 260 "Gramatica.y"
-{yyval.sval = val_peek(2).sval + " " + "+" + " " + val_peek(0).sval;}
+{yyval.sval = val_peek(2).sval + " " + "+" + " " + val_peek(0).sval; analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, false, true);}
 break;
 case 128:
 //#line 261 "Gramatica.y"
-{yyval.sval = val_peek(2).sval + " " + "-" + " " + val_peek(0).sval;}
+{yyval.sval = val_peek(2).sval + " " + "-" + " " + val_peek(0).sval; analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, false, false);}
 break;
 case 129:
 //#line 262 "Gramatica.y"
@@ -1376,11 +1376,11 @@ case 129:
 break;
 case 130:
 //#line 266 "Gramatica.y"
-{yyval.sval = val_peek(2).sval + " " + "*" + " " + val_peek(0).sval;}
+{yyval.sval = val_peek(2).sval + " " + "*" + " " + val_peek(0).sval; analizador_semantico.chequearValidezOperacionTerminoFactor(val_peek(2).sval, val_peek(0).sval, true);}
 break;
 case 131:
 //#line 267 "Gramatica.y"
-{yyval.sval = val_peek(2).sval + " " + "/" + " " + val_peek(0).sval;}
+{yyval.sval = val_peek(2).sval + " " + "/" + " " + val_peek(0).sval; analizador_semantico.chequearValidezOperacionTerminoFactor(val_peek(2).sval, val_peek(0).sval, false);}
 break;
 case 132:
 //#line 268 "Gramatica.y"
@@ -1388,7 +1388,7 @@ case 132:
 break;
 case 133:
 //#line 272 "Gramatica.y"
-{yyval.sval = analizador_semantico.verificarReferenciaValida(val_peek(0).sval, false);}
+{yyval.sval = analizador_semantico.verificarReferenciaValida(val_peek(0).sval, false); analizador_semantico.chequearTipoFactorValido(yyval.sval);}
 break;
 case 134:
 //#line 273 "Gramatica.y"
@@ -1416,7 +1416,7 @@ case 139:
 break;
 case 140:
 //#line 285 "Gramatica.y"
-{System.out.print("(INVOCACION A FUNCION) "); analizador_semantico.verificarReferenciaValida(val_peek(2).sval, true);}
+{System.out.print("(INVOCACION A FUNCION) "); analizador_semantico.chequearInvocacionFuncionValida(analizador_semantico.verificarReferenciaValida(val_peek(2).sval, true), val_peek(1).sval);}
 break;
 case 141:
 //#line 289 "Gramatica.y"
@@ -1426,9 +1426,17 @@ case 142:
 //#line 290 "Gramatica.y"
 {analizador_semantico.eliminarEntradaOriginalID(val_peek(0).sval); yyval.sval = val_peek(0).sval;}
 break;
+case 143:
+//#line 294 "Gramatica.y"
+{yyval.sval = val_peek(1).sval;}
+break;
+case 144:
+//#line 295 "Gramatica.y"
+{yyval.sval = null;}
+break;
 case 145:
 //#line 296 "Gramatica.y"
-{agregarError("ERROR: Parametro real invalido, el formato correcto es: '(' expresion_aritmetica ')' o '(' ')' ");}
+{agregarError("ERROR: Parametro real invalido, el formato correcto es: '(' expresion_aritmetica ')' o '(' ')' "); yyval.sval = null;}
 break;
 case 146:
 //#line 300 "Gramatica.y"
@@ -1494,6 +1502,30 @@ case 172:
 //#line 352 "Gramatica.y"
 {agregarError("ERROR: Condicion de clausula IF invalida, el formato correcto es: '(' comparacion ')'");}
 break;
+case 173:
+//#line 356 "Gramatica.y"
+{analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, true, false);}
+break;
+case 174:
+//#line 357 "Gramatica.y"
+{analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, true, false);}
+break;
+case 175:
+//#line 358 "Gramatica.y"
+{analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, true, false);}
+break;
+case 176:
+//#line 359 "Gramatica.y"
+{analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, true, false);}
+break;
+case 177:
+//#line 360 "Gramatica.y"
+{analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, true, false);}
+break;
+case 178:
+//#line 361 "Gramatica.y"
+{analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, true, false);}
+break;
 case 179:
 //#line 365 "Gramatica.y"
 {System.out.print("(SALIDA DE MENSAJE) "); analizador_semantico.chequearValidezSimbolo(val_peek(1).sval);}
@@ -1504,65 +1536,65 @@ case 180:
 break;
 case 181:
 //#line 370 "Gramatica.y"
-{System.out.print("(SENTENCIA FOR) ");}
+{System.out.print("(SENTENCIA FOR) "); analizador_semantico.chequearCompatibilidadControladoresFor(val_peek(2).sval, val_peek(1).sval);}
 break;
 case 185:
 //#line 380 "Gramatica.y"
-{System.out.print("(SENTENCIA FOR CON SENTENCIA EJECUTABLE DE RETORNO PARCIAL) ");}
+{System.out.print("(SENTENCIA FOR CON SENTENCIA EJECUTABLE DE RETORNO PARCIAL) "); analizador_semantico.chequearCompatibilidadControladoresFor(val_peek(2).sval, val_peek(1).sval);}
 break;
 case 190:
 //#line 391 "Gramatica.y"
-{analizador_semantico.eliminarEntradaOriginalID(val_peek(2).sval); analizador_semantico.verificarReferenciaValida(val_peek(2).sval, false); analizador_semantico.verificarValidezVariableControlFor(val_peek(2).sval);}
+{analizador_semantico.eliminarEntradaOriginalID(val_peek(2).sval); analizador_semantico.verificarReferenciaValida(val_peek(2).sval, false); analizador_semantico.verificarValidezVariableControlFor(val_peek(2).sval); yyval.sval = val_peek(2).sval;}
 break;
 case 191:
 //#line 392 "Gramatica.y"
-{agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID(val_peek(1).sval); analizador_semantico.verificarReferenciaValida(val_peek(1).sval, false); analizador_semantico.verificarValidezVariableControlFor(val_peek(1).sval);}
+{agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID(val_peek(1).sval); analizador_semantico.verificarReferenciaValida(val_peek(1).sval, false); analizador_semantico.verificarValidezVariableControlFor(val_peek(1).sval); yyval.sval = val_peek(1).sval;}
 break;
 case 192:
 //#line 393 "Gramatica.y"
-{agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID(val_peek(1).sval); analizador_semantico.verificarReferenciaValida(val_peek(1).sval, false); analizador_semantico.verificarValidezVariableControlFor(val_peek(1).sval);}
+{agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID(val_peek(1).sval); analizador_semantico.verificarReferenciaValida(val_peek(1).sval, false); analizador_semantico.verificarValidezVariableControlFor(val_peek(1).sval); yyval.sval = val_peek(1).sval;}
 break;
 case 193:
 //#line 394 "Gramatica.y"
-{agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID(val_peek(0).sval); analizador_semantico.verificarReferenciaValida(val_peek(0).sval, false); analizador_semantico.verificarValidezVariableControlFor(val_peek(0).sval);}
+{agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID(val_peek(0).sval); analizador_semantico.verificarReferenciaValida(val_peek(0).sval, false); analizador_semantico.verificarValidezVariableControlFor(val_peek(0).sval); yyval.sval = val_peek(0).sval;}
 break;
 case 194:
 //#line 395 "Gramatica.y"
-{agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
+{agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); yyval.sval = null;}
 break;
 case 195:
 //#line 396 "Gramatica.y"
-{agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
+{agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); yyval.sval = null;}
 break;
 case 196:
 //#line 397 "Gramatica.y"
-{agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
+{agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); yyval.sval = null;}
 break;
 case 197:
 //#line 398 "Gramatica.y"
-{agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE");}
+{agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); yyval.sval = null;}
 break;
 case 198:
 //#line 402 "Gramatica.y"
-{analizador_semantico.verificarConstantesControlFor(val_peek(5).sval, val_peek(3).sval, val_peek(1).sval);}
+{yyval.sval = analizador_semantico.verificarConstantesControlFor(val_peek(5).sval, val_peek(3).sval, val_peek(1).sval);}
 break;
 case 199:
 //#line 403 "Gramatica.y"
-{agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); analizador_semantico.verificarConstantesControlFor(val_peek(5).sval, val_peek(3).sval, val_peek(1).sval);}
+{agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); yyval.sval = analizador_semantico.verificarConstantesControlFor(val_peek(5).sval, val_peek(3).sval, val_peek(1).sval);}
 break;
 case 200:
 //#line 404 "Gramatica.y"
-{agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); analizador_semantico.verificarConstantesControlFor(val_peek(4).sval, val_peek(2).sval, val_peek(0).sval);}
+{agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); yyval.sval = analizador_semantico.verificarConstantesControlFor(val_peek(4).sval, val_peek(2).sval, val_peek(0).sval);}
 break;
 case 201:
 //#line 405 "Gramatica.y"
-{agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); analizador_semantico.verificarConstantesControlFor(val_peek(4).sval, val_peek(2).sval, val_peek(0).sval);}
+{agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); yyval.sval = analizador_semantico.verificarConstantesControlFor(val_peek(4).sval, val_peek(2).sval, val_peek(0).sval);}
 break;
 case 202:
 //#line 406 "Gramatica.y"
-{agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'");}
+{agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); yyval.sval = null;}
 break;
-//#line 1487 "Parser.java"
+//#line 1519 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####
@@ -1645,6 +1677,18 @@ public Parser(boolean debugMe)
 
 }
 //################### END OF CLASS ##############################
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

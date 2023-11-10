@@ -8,6 +8,7 @@ public class AnalizadorSemantico {
 	public static String ambito_actual = "main";
 	public static boolean ambito_invalido_detectado = false;
 	public static String ambito_metodos_impl_actual = "";
+	public static ArrayList<String> ambitos_metodos_impl = new ArrayList<String>();
 	public static String lexema_funcion_clausula_impl_actual = null;
 	public static int cantidad_prototipos_interfaz_actual = 0;
 	public static int cantidad_prototipos_interfaz_utilizados = 0;
@@ -37,6 +38,17 @@ public class AnalizadorSemantico {
 			else if (ambito_nuevo.equals("<>")) { //este caso quiere decir que se cerro una clausula IMPL
 				int posicion_ultimo_ambito_impl = ambito_actual.lastIndexOf("<");
 				ambito_actual = ambito_actual.substring(0, posicion_ultimo_ambito_impl);
+				int cantidad_ambitos_impl_actuales = ambitos_metodos_impl.size();
+				if (cantidad_ambitos_impl_actuales > 0) { //si llego hasta aca se supone que deberia ser mayor a 0 pero se pregunta igual
+					ambitos_metodos_impl.remove(cantidad_ambitos_impl_actuales-1);
+					cantidad_ambitos_impl_actuales--;
+					if (cantidad_ambitos_impl_actuales > 0) 
+						ambito_metodos_impl_actual = ambitos_metodos_impl.get(cantidad_ambitos_impl_actuales-1); //de este modo, si por ejemplo hay una clausula IMPL que contiene una funcion que adentro tiene otra clausula IMPL, al salir de la mas interna se conserva el ambito de la clausula externa para cuando termine la definicion de la funcion
+					else
+						ambito_metodos_impl_actual = "";
+				}
+				else
+					ambito_metodos_impl_actual = "";
 			}
 			else if (ambito_nuevo.charAt(0) == '(' || ambito_nuevo.charAt(0) == '[' || ambito_nuevo.charAt(0) == '<') //este caso quiere decir que se entro en una clase si inicia con parentesis, en una interfaz si es con corchetes, o en una clausula IMPL si empieza con un "<" (no se marcan como ambitos nuevos como tales, pero es necesario diferenciarlos del ambiente externo)
 				ambito_actual = ambito_actual + ambito_nuevo;
@@ -49,8 +61,10 @@ public class AnalizadorSemantico {
 				ambito_actual = ambito_actual + "(INVALIDO)";
 			else if (ambito_nuevo.charAt(0) == '[')
 				ambito_actual = ambito_actual + "[INVALIDO]";
-			else if (ambito_nuevo.charAt(0) == '<')
+			else if (ambito_nuevo.charAt(0) == '<') {
 				ambito_actual = ambito_actual + "<INVALIDO>";
+				ambitos_metodos_impl.add("INVALIDO");
+			}
 			else
 				ambito_actual = ambito_actual + ":INVALIDO";
 			ambito_invalido_detectado = false; //esto se hace a traves de una variable que aqui se vuelve a setear en false y se usa una marca de "INVALIDO" en el ambito actual. No se podria hacer seteando la variable en false al llegar al final de la estructura sintactica, porque si adentro contiene otras estructuras sintacticas el cierre de estas provocaria que esta variable se setee en false antes de tiempo
@@ -514,6 +528,7 @@ public class AnalizadorSemantico {
 			else {
 				int posicion_primer_ambito = lexema_clase_nm.indexOf(":");
 				ambito_metodos_impl_actual = lexema_clase_nm.substring(posicion_primer_ambito+1, lexema_clase_nm.length()) + "(" + clase + ")";	
+				ambitos_metodos_impl.add(ambito_metodos_impl_actual); //se registra el nuevo ambito de clase del cual se estan implementando metodos (sin perder los anteriores, por si hay clausulas IMPL no finalizadas mas arriba, es el caso de que una clausula IMPL se declare dentro de una funcion de otra clausula IMPL)
 			}
 		}
 	}
@@ -700,11 +715,12 @@ public class AnalizadorSemantico {
 		for (String lexema: AnalizadorLexico.simbolos.keySet()) {
 			AtributosSimbolo atributos_variable_nm = AnalizadorLexico.simbolos.get(lexema);
 			String uso = atributos_variable_nm.getUso();
-			if (uso != null && (uso.equals("nombre_variable") || uso.equals("nombre_atributo") || uso.equals("nombre_parametro_formal")))
-				if (!atributos_variable_nm.fueReferenciada()) {
+			String tipo = atributos_variable_nm.getTipo();
+			if (uso != null && (uso.equals("nombre_variable") || uso.equals("nombre_atributo") || uso.equals("nombre_parametro_formal")) && tipo != null) //solo se muestra un WARNING si es realmente una variable, atributo o parametro formal, las referencias a clases para herencia por composicion no se consideraron
+				if (!atributos_variable_nm.fueReferenciada() && !lexema.contains(".")) { //si una variable no fue referenciada del lado derecho de una asignacion, solo se muestra un WARNING  si no contiene ".", o sea que no se genera de manera adicional debido a herencia por composicion o a una instancia de una clase
 					String nombre_variable = lexema.substring(0, lexema.indexOf(":"));
 					AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - WARNING: Una variable llamada '" + nombre_variable + "' fue declarada pero nunca referenciada en el lado derecho de alguna asignacion");
-				}
+				} //si dos variables se llaman igual pero estan en distintos ambitos y nunca se referenciaron del lado derecho de una asignacion, se marcan con WARNINGS distintos pero con el mismo nombre, de lo contrario hay que poner todo el lexema nm para diferenciarlas, que es sencillo pero no tiene sentido. Tambien cabe aclarar que si por ejemplo hay una instancia de una clase que contiene cierto atributo, si el atributo no se referencia dentro de la clase sera marcado como WARNING, sin importar si para la instancia de la clase se uso ese atributo (ya que en si no son lo mismo y no tienen la misma entrada en la tabla de siumbolos) 
         }
 	}
 	
@@ -720,36 +736,220 @@ public class AnalizadorSemantico {
 			for (String elemento: elementos_expresion_aritmetica)
 				if (!elemento.equals("+") && !elemento.equals("-") && !elemento.equals("*") && !elemento.equals("/") && !esConstante(elemento)) {
 					AtributosSimbolo atributos_referencia_nm = AnalizadorLexico.simbolos.get(elemento);
-					if (atributos_referencia_nm != null && ((atributos_referencia_nm.getUso().equals("nombre_variable") || atributos_referencia_nm.getUso().equals("nombre_atributo")) && (atributos_referencia_nm.getTipo() != null && (atributos_referencia_nm.getTipo().equals("INT") || atributos_referencia_nm.getTipo().equals("ULONG") || atributos_referencia_nm.getTipo().equals("DOUBLE")))))
+					if (atributos_referencia_nm != null && (atributos_referencia_nm.getUso().equals("nombre_variable") || atributos_referencia_nm.getUso().equals("nombre_atributo") || atributos_referencia_nm.getUso().equals("nombre_parametro_formal"))) {
 						atributos_referencia_nm.variableReferenciada();
+						int posicion_primer_punto = elemento.indexOf(".");
+						int posicion_primer_ambito = elemento.indexOf(":");
+						if (posicion_primer_punto != -1 && posicion_primer_ambito != -1) {
+							String nombre_instancia = elemento.substring(0, posicion_primer_punto);
+							String lexema_instancia_nm = nombre_instancia + ":" + elemento.substring(posicion_primer_ambito+1, elemento.length());
+							AtributosSimbolo atributos_instancia_nm = AnalizadorLexico.simbolos.get(lexema_instancia_nm);
+							if (atributos_instancia_nm != null) //no tendria sentido que no se cumpla, ya que si existe una variable generada por un atributo de una instancia de una clase, entonces tiene que existir la instancia
+								atributos_instancia_nm.variableReferenciada(); //si se referencia del lado derecho de una asignacion a cualquier variable propia de una instancia, se considera como referenciada la instancia
+						}
+					}
 				}
 		}
 	}
 	
-	public void verificarValidezVariableControlFor(String variable_control) {
-		ArrayList<String> usos = new ArrayList<String>();
-		usos.add("nombre_variable");
-		usos.add("nombre_atributo");
-		usos.add("nombre_parametro_formal");
-		String variable_control_nm = obtenerLexemaNmMasCercano(variable_control, usos, ambito_actual);
-		AtributosSimbolo atributos_control_nm = AnalizadorLexico.simbolos.get(variable_control_nm);
-		if (atributos_control_nm != null) {
-			String tipo_variable_control = atributos_control_nm.getTipo();
-			if (!tipo_variable_control.equals("INT") && !tipo_variable_control.equals("ULONG"))
-				AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: La variable de control '" + variable_control + "' debe ser de tipo INT o ULONG, pero es de tipo " + tipo_variable_control);
+	public void chequearAsignacionValida(String lexema_referencia_lado_izquierdo, String expresion_aritmetica_lado_derecho) { //se chequea que una asignacion sea valida, o sea INT a INT, ULONG a ULONG o DOUBLE a DOUBLE (la funcion es similar a la de chequeo para operaciones entre un termino y un factor, pero no igual)
+		if (esAmbitoValido()) {
+			AtributosSimbolo atributos_lexema_lado_izquierdo = AnalizadorLexico.simbolos.get(lexema_referencia_lado_izquierdo);
+			if (atributos_lexema_lado_izquierdo != null) { //si no hubo error no tiene sentido que sea null
+				String tipo_lado_derecho = determinarTipo(expresion_aritmetica_lado_derecho);
+				String tipo_lado_izquierdo = atributos_lexema_lado_izquierdo.getTipo();
+				if (tipo_lado_derecho != null) {
+					if (!tipo_lado_izquierdo.equals(tipo_lado_derecho) && (tipo_lado_izquierdo.equals("INT") || tipo_lado_izquierdo.equals("ULONG") || tipo_lado_izquierdo.equals("DOUBLE")) && (tipo_lado_derecho.equals("INT") || tipo_lado_derecho.equals("ULONG") || tipo_lado_derecho.equals("DOUBLE"))) //si los tipos no son iguales, hay un error especifico para el caso de que ambos sean de tipo numerico, y hay otros para cuando sean iguales o no, alguno es de un tipo no numerico
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Asignacion invalida, no puede asignarse un " + tipo_lado_derecho + " a un " + tipo_lado_izquierdo);
+					else if (!tipo_lado_izquierdo.equals("INT") && !tipo_lado_izquierdo.equals("ULONG") && !tipo_lado_izquierdo.equals("DOUBLE") && !tipo_lado_derecho.equals("INT") && !tipo_lado_derecho.equals("ULONG") && !tipo_lado_derecho.equals("DOUBLE")) //caso de que sean o no iguales los tipos del lado derecho e izquierdo, ambos son de tipos no numericos
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Asignacion invalida, tanto el lado izquierdo como derecho deben ser de tipo numerico, pero se esta queriendo asignar un " + tipo_lado_derecho + " (no numerico) a un " + tipo_lado_izquierdo + " (no numerico)");
+					else if (!tipo_lado_izquierdo.equals("INT") && !tipo_lado_izquierdo.equals("ULONG") && !tipo_lado_izquierdo.equals("DOUBLE")) //caso de que son tipos distintos y unicamente el lado izquierdo es no numerico
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Asignacion invalida, tanto el lado izquierdo como derecho deben ser de tipo numerico, pero se esta queriendo asignar un " + tipo_lado_derecho + " a un " + tipo_lado_izquierdo + " (no numerico)");
+					else if (!tipo_lado_derecho.equals("INT") && !tipo_lado_derecho.equals("ULONG") && !tipo_lado_derecho.equals("DOUBLE")) //caso de que son tipos distintos y unicamente el lado derecho es no numerico
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Asignacion invalida, tanto el lado izquierdo como derecho deben ser de tipo numerico, pero se esta queriendo asignar un " + tipo_lado_derecho + " (no numerico) a un " + tipo_lado_izquierdo);
+				}
+			}
 		}
 	}
 	
-	public void verificarConstantesControlFor(String constante_inicio, String constante_fin, String constante_variacion) {
-		AtributosSimbolo atributos_constante_inicio = AnalizadorLexico.simbolos.get(constante_inicio);
-		AtributosSimbolo atributos_constante_fin = AnalizadorLexico.simbolos.get(constante_fin);
-		AtributosSimbolo atributos_constante_variacion = AnalizadorLexico.simbolos.get(constante_variacion);
-		if (atributos_constante_inicio == null || (!atributos_constante_inicio.getTipo().equals("INT") && !atributos_constante_inicio.getTipo().equals("ULONG")))
-			AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: La constante de inicializacion de la variable de control del FOR debe ser una constante entera valida (tipo INT o ULONG)");
-		if (atributos_constante_fin == null || (!atributos_constante_fin.getTipo().equals("INT") && !atributos_constante_fin.getTipo().equals("ULONG")))
-			AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: La constante de valor final de la variable de control del FOR debe ser una constante entera valida (tipo INT o ULONG)");
-		if (atributos_constante_variacion == null || (!atributos_constante_variacion.getTipo().equals("INT") && !atributos_constante_variacion.getTipo().equals("ULONG")))
-			AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: La constante de variacion de la variable de control del FOR debe ser una constante entera valida (tipo INT o ULONG)");
+	public void verificarValidezVariableControlFor(String variable_control) {
+		if (esAmbitoValido()) {
+			ArrayList<String> usos = new ArrayList<String>();
+			usos.add("nombre_variable");
+			usos.add("nombre_atributo");
+			usos.add("nombre_parametro_formal");
+			String variable_control_nm = obtenerLexemaNmMasCercano(variable_control, usos, ambito_actual);
+			AtributosSimbolo atributos_control_nm = AnalizadorLexico.simbolos.get(variable_control_nm);
+			if (atributos_control_nm != null) {
+				String tipo_variable_control = atributos_control_nm.getTipo();
+				if (!tipo_variable_control.equals("INT") && !tipo_variable_control.equals("ULONG"))
+					AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: La variable de control '" + variable_control + "' debe ser de tipo INT o ULONG, pero es de tipo " + tipo_variable_control);
+			}
+		}
+	}
+	
+	public String verificarConstantesControlFor(String constante_inicio, String constante_fin, String constante_variacion) {
+		if (esAmbitoValido())  {
+			AtributosSimbolo atributos_constante_inicio = AnalizadorLexico.simbolos.get(constante_inicio);
+			AtributosSimbolo atributos_constante_fin = AnalizadorLexico.simbolos.get(constante_fin);
+			AtributosSimbolo atributos_constante_variacion = AnalizadorLexico.simbolos.get(constante_variacion);
+			String resultado = "";
+			if (atributos_constante_inicio == null || (!atributos_constante_inicio.getTipo().equals("INT") && !atributos_constante_inicio.getTipo().equals("ULONG")))
+				AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: La constante de inicializacion de la variable de control del FOR debe ser una constante entera valida (tipo INT o ULONG)");
+			else {
+				resultado += constante_inicio;
+				if (atributos_constante_fin == null || (!atributos_constante_fin.getTipo().equals("INT") && !atributos_constante_fin.getTipo().equals("ULONG")))
+					AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: La constante de valor final de la variable de control del FOR debe ser una constante entera valida (tipo INT o ULONG)");
+				else {
+					resultado += " " + constante_fin;
+					if (atributos_constante_variacion == null || (!atributos_constante_variacion.getTipo().equals("INT") && !atributos_constante_variacion.getTipo().equals("ULONG")))
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: La constante de variacion de la variable de control del FOR debe ser una constante entera valida (tipo INT o ULONG)");
+					else {
+						resultado += " " + constante_variacion;
+						return resultado;
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
+	public void chequearCompatibilidadControladoresFor(String variable_control, String constantes_control) {
+		if (esAmbitoValido()) {
+			if (variable_control != null && constantes_control != null) { //si no se cumpliera seria porque ya habria un error asociado, ya sea respecto a la variable de control, a las constantes o ambas
+				ArrayList<String> usos = new ArrayList<String>();
+				usos.add("nombre_variable");
+				usos.add("nombre_atributo");
+				usos.add("nombre_parametro_formal");
+				String variable_control_nm = obtenerLexemaNmMasCercano(variable_control, usos, ambito_actual);
+				AtributosSimbolo atributos_control_nm = AnalizadorLexico.simbolos.get(variable_control_nm);
+				if (atributos_control_nm != null) { //si no se cumpliera seria porque ya habria un error asociado a la variable de control
+					String tipo_variable_control = atributos_control_nm.getTipo();
+					String[] constantes = constantes_control.split(" ");
+					String tipo_constante_inicio = AnalizadorLexico.simbolos.get(constantes[0]).getTipo();
+					String tipo_constante_fin = AnalizadorLexico.simbolos.get(constantes[1]).getTipo();
+					String tipo_constante_variacion = AnalizadorLexico.simbolos.get(constantes[2]).getTipo();
+					if (!tipo_variable_control.equals(tipo_constante_inicio) || !tipo_variable_control.equals(tipo_constante_fin) || !tipo_variable_control.equals(tipo_constante_variacion)) //ademas de tener que ser todas de un tipo entero (INT o ULONG), la variable de control y las 3 constantes de control deben ser del mismo tipo (todas INT o todas ULONG)
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: La variable de control del FOR y las 3 constantes tienen que ser todas del mismo tipo entero, ya sea INT o ULONG");
+				}
+			}
+		}
+	}
+	
+	public void chequearValidezOperacionComparacionExpresiones(String expresion1, String expresion2, boolean es_comparacion, boolean es_suma) {
+		if (esAmbitoValido()) {
+			String tipo_expresion1 = determinarTipo(expresion1);
+			String tipo_expresion2 = determinarTipo(expresion2);
+			if (tipo_expresion1 != null && tipo_expresion2 != null && !tipo_expresion1.equals(tipo_expresion2) && (tipo_expresion1.equals("INT") || tipo_expresion1.equals("ULONG") || tipo_expresion1.equals("DOUBLE")) && (tipo_expresion2.equals("INT") || tipo_expresion2.equals("ULONG") || tipo_expresion2.equals("DOUBLE"))) { //si los tipos no son iguales, solo se imprime el error si ambos son tipos numericos, ya que si uno no es un tipo numerico ya hay un error previo
+				if (es_comparacion) //caso de que sea una comparacion entre dos expresiones aritmeticas
+					AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Comparacion invalida, no puede compararse un " + tipo_expresion1 + " con un " + tipo_expresion2);
+				else { //caso de que sea una operacion de suma o resta entre una expresion aritmetica y un termino
+					if (es_suma)
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Operacion invalida, no puede efectuarse una suma entre un " + tipo_expresion1 + " y un " + tipo_expresion2);
+					else
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Operacion invalida, no puede efectuarse una resta entre un " + tipo_expresion1 + " y un " + tipo_expresion2);
+				}
+			}
+		}
+	}
+	
+	public void chequearValidezOperacionTerminoFactor(String termino, String lexema_factor, boolean es_multiplicacion) {
+		if (esAmbitoValido()) {
+			AtributosSimbolo atributos_lexema_factor = AnalizadorLexico.simbolos.get(lexema_factor);
+			if (atributos_lexema_factor != null) { //si no hubo error no tiene sentido que sea null
+				String tipo_termino = determinarTipo(termino);
+				String tipo_factor = atributos_lexema_factor.getTipo();
+				if (tipo_termino != null) {
+					if (!tipo_factor.equals(tipo_termino) && (tipo_factor.equals("INT") || tipo_factor.equals("ULONG") || tipo_factor.equals("DOUBLE")) && (tipo_termino.equals("INT") || tipo_termino.equals("ULONG") || tipo_termino.equals("DOUBLE"))) { //si los tipos no son iguales, solo se imprime el error si ambos son tipos numericos, ya que si uno no es un tipo numerico ya hay un error previo
+						if (es_multiplicacion)
+							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Operacion invalida, no puede efectuarse una multiplicacion entre un " + tipo_termino + " y un " + tipo_factor);
+						else
+							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Operacion invalida, no puede efectuarse una division entre un " + tipo_termino + " y un " + tipo_factor);
+					}
+					else if (tipo_termino.equals(tipo_factor) && (tipo_termino.equals("INT") || tipo_termino.equals("ULONG")) && !es_multiplicacion) //es el caso de la division entre dos operandos validos e iguales que no son de tipo DOUBLE, por lo cual se genera un WARNING indicando que el resultado sera de tipo DOUBLE
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - WARNING: Se efectuo una division entre dos operandos de tipo " + tipo_termino + ", pero el resultado sera de tipo DOUBLE");
+				}
+			}
+		}
+	}
+	
+	private String determinarTipo(String expresion) { //devuelve el tipo de una expresion aritmetica o de un termino
+		if (expresion != null) {
+			if (expresion.contains("/")) //si la expresion aritmetica contiene el simbolo de division, y no hubo un error anterior, entonces la expresion tiene que ser de tipo DOUBLE (de lo contrario, ya tiene que haberse detectado un error anterior)
+				return "DOUBLE";
+			else {
+				String[] elementos_expresion = expresion.split(" ");
+				String lexema_primer_elemento = elementos_expresion[0];
+				AtributosSimbolo atributos_primer_elemento = AnalizadorLexico.simbolos.get(lexema_primer_elemento);
+				if (atributos_primer_elemento != null) //si no hubo error no tendria sentido que sea null
+					return atributos_primer_elemento.getTipo(); //dado que si no hay una barra de division (que es la unica que puede cambiar el tipo de la expresion aunque los operandos sean de otro tipo) y no hubo error, el tipo de la expresion indefectiblemente tiene que ser igual al del primer operando
+			}
+		}
+		return null;
+	}
+	
+	public void chequearTipoFactorValido(String lexema_referencia_nm) { //permite verificar que sea valido el tipo de una referencia para ser un factor, o sea que el tipo tiene que ser INT, ULONG o DOUBLE
+		if (esAmbitoValido()) {
+			if (lexema_referencia_nm != null) {
+				AtributosSimbolo atributos_referencia_nm = AnalizadorLexico.simbolos.get(lexema_referencia_nm);
+				if (atributos_referencia_nm != null) {
+					String tipo_factor = atributos_referencia_nm.getTipo();
+					if (tipo_factor != null && !tipo_factor.equals("INT") && !tipo_factor.equals("ULONG") && !tipo_factor.equals("DOUBLE"))
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: El tipo " + tipo_factor + " no es valido como factor en una expresion aritmetica");
+				}
+			}
+		}
+	}
+	
+	public void chequearInvocacionFuncionValida(String lexema_funcion_nm, String parametro_real) { //para chequear que una invocacion a funcion sea valida, para lo cual el parametro de la funcion o metodo que se invoco, debe tener el mismo tipo que la expresion aritmetica del parametro formal (o que no haya parametro formal ni parametro real). Ademas, en caso de ser un prototipo debe estar implementado, sino tambien hay error
+		if (esAmbitoValido()) {
+			AtributosSimbolo atributos_lexema_funcion_nm = AnalizadorLexico.simbolos.get(lexema_funcion_nm);
+			if (atributos_lexema_funcion_nm != null) { //si no hubo error no tiene sentido que sea null
+				String nombre_parametro_formal = atributos_lexema_funcion_nm.getNombreParametroFormal();
+				String nombre_funcion = lexema_funcion_nm.substring(0, lexema_funcion_nm.indexOf(":"));
+				boolean es_metodo = (atributos_lexema_funcion_nm.getUso().equals("nombre_metodo") || atributos_lexema_funcion_nm.getUso().equals("nombre_prototipo_metodo"));
+				if (parametro_real != null && nombre_parametro_formal != null) {
+					String tipo_parametro_real = determinarTipo(parametro_real);
+					if (tipo_parametro_real != null) { //si no hubo error no tiene sentido que sea null
+						int posicion_primer_ambito_funcion = lexema_funcion_nm.indexOf(":");
+						String lexema_parametro_formal_nm = nombre_parametro_formal + ":" + lexema_funcion_nm.substring(posicion_primer_ambito_funcion+1, lexema_funcion_nm.length()) + ":" + lexema_funcion_nm.substring(0, posicion_primer_ambito_funcion);
+						AtributosSimbolo atributos_parametro_formal_nm = AnalizadorLexico.simbolos.get(lexema_parametro_formal_nm);
+						if (atributos_parametro_formal_nm != null && atributos_parametro_formal_nm.getUso().equals("nombre_parametro_formal")) {
+							if (!atributos_parametro_formal_nm.getTipo().equals(tipo_parametro_real)) {
+								if (es_metodo)
+									AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Se esta intentando invocar al metodo " + nombre_funcion + " con un parametro de tipo " + tipo_parametro_real + " cuando en realidad deberia recibir un parametro de tipo " + atributos_parametro_formal_nm.getTipo());
+								else
+									AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Se esta intentando invocar a la funcion " + nombre_funcion + " con un parametro de tipo " + tipo_parametro_real + " cuando en realidad deberia recibir un parametro de tipo " + atributos_parametro_formal_nm.getTipo());
+							}
+							else if ((atributos_lexema_funcion_nm.getUso().equals("nombre_prototipo") || atributos_lexema_funcion_nm.getUso().equals("nombre_prototipo_metodo")) && atributos_lexema_funcion_nm.getLexemaFuncionImplementacion() == null) { //caso de que se quiera invocar a un prototipo de metodo o de funcion con parametro, jamas implementado
+								if (es_metodo)
+									AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Se esta intentando invocar al metodo " + nombre_funcion + " que nunca se implemento");
+								else
+									AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Se esta intentando invocar a la funcion " + nombre_funcion + " que nunca se implemento"); //este caso puede ocurrir ya que puede haber prototipos sueltos en una en el main o en una funcion, sin estar de forma directa dentro de una clase, pero siempre que pase eso estara este error dado que la unica forma de implementar un prototipo es con una clausula IMPL y estas solo pueden implementar prototipos de metodos de clases
+							}
+						}
+					}
+				}
+				else if (parametro_real != null) {
+					if (es_metodo)
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Se esta intentando invocar al metodo " + nombre_funcion + " con un parametro cuando en realidad no lleva ninguno");
+					else
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Se esta intentando invocar a la funcion " + nombre_funcion + " con un parametro cuando en realidad no lleva ninguno");
+				}
+				else if (nombre_parametro_formal != null) {
+					if (es_metodo)
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Se esta intentando invocar al metodo " + nombre_funcion + " sin ningun parametro cuando en realidad lleva uno");
+					else
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Se esta intentando invocar a la funcion " + nombre_funcion + " sin ningun parametro cuando en realidad lleva uno");
+				} //si se da el caso de que se efectua una invocacion a funcion con un parametro real correspondiente a una variable no declarada en el ambito actual o en alguno de los que estan por encima, se considera como que se lo esta llamando sin parametro (porque en realidad no existe). Sin embargo, aunque la funcion invocada no tuviera parametro formal, igual habra un error debido a que la referencia es invalida, por lo que no hay problema 
+				else if ((atributos_lexema_funcion_nm.getUso().equals("nombre_prototipo") || atributos_lexema_funcion_nm.getUso().equals("nombre_prototipo_metodo")) && atributos_lexema_funcion_nm.getLexemaFuncionImplementacion() == null) { //caso de que se quiera invocar a un prototipo de metodo o de funcion sin parametro, jamas implementado
+					if (es_metodo)
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Se esta intentando invocar al metodo " + nombre_funcion + " que nunca se implemento");
+					else
+						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Se esta intentando invocar a la funcion " + nombre_funcion + " que nunca se implemento"); //este caso puede ocurrir ya que puede haber prototipos sueltos en una en el main o en una funcion, sin estar de forma directa dentro de una clase, pero siempre que pase eso estara este error dado que la unica forma de implementar un prototipo es con una clausula IMPL y estas solo pueden implementar prototipos de metodos de clases
+				}
+			}		
+		}
 	}
 	
 }

@@ -24,11 +24,11 @@
 	CLASS c2 {
 		c1,						*{Se deberia detectar para linea 25: "DECLARACION DE REFERENCIA A CLASE"}*
 
-		VOID funcion_interfaz(),			*{Se deberia detectar para linea 27: "DECLARACION DE PROTOTIPO DE FUNCION"}*
+		VOID funcion_c2(),				*{Se deberia detectar para linea 27: "DECLARACION DE PROTOTIPO DE FUNCION"}*
 	},							*{Se deberia detectar para linea 28: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*
 	
 	IMPL FOR c2: {
-		VOID funcion_c2() {
+		VOID funcion_clase_c2() {
 			RETURN,
 		},					*{Se deberia detectar para linea 33: "DECLARACION DE FUNCION"}*
 	},						*{Se deberia detectar para linea 34: "DECLARACION DE CLAUSULA IMPL CON BLOQUE DE FUNCIONES IMPLEMENTADAS"}*		
@@ -59,7 +59,7 @@
 	ULONG ulong1 ,							*{Se deberia detectar para linea 59: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
 	funcion1(ulong1 + ulong1),				*{Se deberia detectar para linea 60: "INVOCACION A FUNCION"}*
 	funcion1(ulong1),						*{Se deberia detectar para linea 61: "INVOCACION A FUNCION"}*
-	funcion1(1234_ul),						*{Se deberia detectar para linea 62: "INVOCACION A FUNCION"}*
+	funcion1(1234_i),						*{Se deberia detectar para linea 62: "INVOCACION A FUNCION"}*
 	funcion2(),								*{Se deberia detectar para linea 63: "INVOCACION A FUNCION"}*
 
 	PRINT %
@@ -68,11 +68,12 @@
 	mundo	%,								*{Se deberia detectar para linea 68: "SALIDA DE MENSAJE"}*
 	c2 inst_c2,
 	c1 inst_c1,								*{Se deberia detectar para linea 70: "DECLARACION DE LISTA DE VARIABLES DEL TIPO DE UNA CLASE"}*
-	
-	FOR i IN RANGE (0.4;32768_i;3_i) {
+	INT i,
+	DOUBLE j,
+	FOR i IN RANGE (4_i;32767_i;3_ul) {
 		FOR j IN RANGE (0_i;100_i;10_i)
-			inst_c1.funcion_interfaz(j),			*{Se deberia detectar para linea 73: "INVOCACION A FUNCION" y "SENTENCIA FOR CON SENTENCIA EJECUTABLE"}*
-		inst_c1._atributo1 = i / 2_i,		*{Se deberia detectar para linea 74: "ASIGNACION USANDO OPERADOR DE IGUAL"}*
+			inst_c2.funcion_c2(),			*{Se deberia detectar para linea 73: "INVOCACION A FUNCION" y "SENTENCIA FOR CON SENTENCIA EJECUTABLE"}*
+		inst_c1._atributo1 = i / inst_c1._atributo1 + 3_i,			*{Se deberia detectar para linea 74: "ASIGNACION USANDO OPERADOR DE IGUAL"}*
 	        funcion2(),
 	},										*{Se deberia detectar para linea 75: "SENTENCIA FOR CON BLOQUE DE SENTENCIAS EJECUTABLES"}*
 }							*{Se deberia detectar para linea 77: "PROGRAMA"}*											
