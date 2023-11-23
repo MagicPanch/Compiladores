@@ -19,7 +19,8 @@ public class GeneradorAssembler {
 
     private String encabezado;
 
-    public void recorrer_y_Generar_Codigo(){
+
+    public void recorrer_y_Generar_Codigo(Nodo){
         //
         try (FileWriter archivo = new FileWriter("./codigo_Assembler.asm")) {
             //AGREGAR A TABLA DE SIMBOLOS LOS 3 MESSAGEBOX CON EL MENSAJE DE ERROR CORRESPONDIENTE (OVERFLOW ENTEROS,OVERFLOW PRODUCTO DOUBLE, RESULTADO NEGATIVO RESTA ULONG)
