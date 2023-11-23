@@ -87,7 +87,7 @@ public class GeneradorAssembler {
                     return resultado2;
                 }
                 else if ((tipo.equals("ULONG"))) {
-                   resultado = suma_Enteros_Ulong(padre_subarbol);
+                    resultado = suma_Enteros_Ulong(padre_subarbol);
                     Nodo resultado3 = new Nodo(null, null, null, resultado);
                     contador_Variable_Auxiliar++;
                     return resultado3;
