@@ -165,10 +165,10 @@ public class GeneradorAssembler {
                 codigoFinal.add(codigo);
                 return null;
             case "CALL": //LLAMADO FUNCIONES
-                // tal vez deberia copiar las variables aca !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // tal vez deberia copiar las variables aca de ida  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 String codigo22 = "CALL " + padre_subarbol.getLexema();
                 codigoFinal.add(codigo22);
-                // tal vez deberia copiar las variables aca !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                // tal vez deberia copiar las variables aca de vuelta !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 return null;
             case "THEN":
                 then_if_();
@@ -186,101 +186,300 @@ public class GeneradorAssembler {
     }
 
     private String suma_Pto_Flotante(Nodo nodo){
-        String codigo = "FLD " + nodo.getIzq().getLexema() + "\n"
-                + "FLD " + nodo.getDer().getLexema() + "\n"
-                + "FADD \n"
-                + "FSTP @aux" + contador_Variable_Auxiliar;
-        codigoFinal.add(codigo);
+        if (nodo.getIzq().getValor_constante() == null && nodo.getDer().getValor_constante() == null) {
+            String codigo = "FLD " + nodo.getIzq().getLexema() + "\n"
+                    + "FLD " + nodo.getDer().getLexema() + "\n"
+                    + "FADD \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigoFinal.add(codigo);
+        }
+        else if (nodo.getIzq().getValor_constante() != null)
+        {
+            String codigo4 = "FLD " + nodo.getIzq().getValor_constante() + "\n"
+                    + "FLD " + nodo.getDer().getLexema() + "\n"
+                    + "FADD \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigoFinal.add(codigo4);
+        }
+        else
+        {
+            String codigo4 = "FLD " + nodo.getIzq().getLexema() + "\n"
+                    + "FLD " + nodo.getDer().getValor_constante() + "\n"
+                    + "FADD \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigoFinal.add(codigo4);
+        }
         return "@aux"+contador_Variable_Auxiliar;
     }
     private String suma_Enteros_Int(Nodo nodo){
-        String codigo = "MOV AX," + nodo.getIzq().getLexema() + "\n"
-                + "ADD AX ," + nodo.getDer().getLexema() + "\n"
-                + "JO error_overflow_suma_int \n" //CONTROL OVERFLOW
-                + "MOV @aux" + contador_Variable_Auxiliar +",AX"; //EL JO ES PARA CONTROLAR EL OVERFLOW
-        codigoFinal.add(codigo);
+        if (nodo.getIzq().getValor_constante() == null && nodo.getDer().getValor_constante() == null) {
+            String codigo = "MOV AX," + nodo.getIzq().getLexema() + "\n"
+                    + "ADD AX ," + nodo.getDer().getLexema() + "\n"
+                    + "JO error_overflow_suma_int \n" //CONTROL OVERFLOW
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX"; //EL JO ES PARA CONTROLAR EL OVERFLOW
+            codigoFinal.add(codigo);
+        }
+        else if(nodo.getIzq().getValor_constante() != null){
+            String codigo = "MOV AX," + nodo.getIzq().getValor_constante() + "\n"
+                    + "ADD AX ," + nodo.getDer().getLexema() + "\n"
+                    + "JO error_overflow_suma_int \n" //CONTROL OVERFLOW
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX"; //EL JO ES PARA CONTROLAR EL OVERFLOW
+            codigoFinal.add(codigo);
+        }
+        else{
+            String codigo = "MOV AX," + nodo.getIzq().getLexema() + "\n"
+                    + "ADD AX ," + nodo.getDer().getValor_constante() + "\n"
+                    + "JO error_overflow_suma_int \n" //CONTROL OVERFLOW
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX"; //EL JO ES PARA CONTROLAR EL OVERFLOW
+            codigoFinal.add(codigo);
+        }
         return "@aux"+contador_Variable_Auxiliar;
     }
     private String suma_Enteros_Ulong(Nodo nodo){
-        String codigo = "MOV EAX," + nodo.getIzq().getLexema() + "\n"
-                + "ADD EAX ," + nodo.getDer().getLexema() + "\n"
-                + "MOV @aux" + contador_Variable_Auxiliar +",EAX";
-        codigoFinal.add(codigo);
+        if (nodo.getIzq().getValor_constante() == null && nodo.getDer().getValor_constante() == null) {
+            String codigo = "MOV EAX," + nodo.getIzq().getLexema() + "\n"
+                    + "ADD EAX ," + nodo.getDer().getLexema() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo);
+        }
+        else if (nodo.getIzq().getValor_constante() != null){
+            String codigo = "MOV EAX," + nodo.getIzq().getValor_constante() + "\n"
+                    + "ADD EAX ," + nodo.getDer().getLexema() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo);
+        }
+        else{
+            String codigo = "MOV EAX," + nodo.getIzq().getLexema() + "\n"
+                    + "ADD EAX ," + nodo.getDer().getValor_constante() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo);
+        }
         return "@aux"+contador_Variable_Auxiliar;
     }
 
     private String multiplicacion_Enteros_Int(Nodo nodo){
-        String codigo1 = "MOV AX," + nodo.getIzq().getLexema() + "\n"
-                + "IMUL AX ," + nodo.getDer().getLexema() + "\n"
-                + "MOV @aux" + contador_Variable_Auxiliar +",AX";
-        codigoFinal.add(codigo1);
+        if (nodo.getIzq().getValor_constante() == null && nodo.getDer().getValor_constante() == null) {
+            String codigo1 = "MOV AX," + nodo.getIzq().getLexema() + "\n"
+                    + "IMUL AX ," + nodo.getDer().getLexema() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigoFinal.add(codigo1);
+        }
+        else if(nodo.getIzq().getValor_constante() != null){
+            String codigo1 = "MOV AX," + nodo.getIzq().getValor_constante() + "\n"
+                    + "IMUL AX ," + nodo.getDer().getLexema() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigoFinal.add(codigo1);
+        }
+        else
+        {
+            String codigo1 = "MOV AX," + nodo.getIzq().getLexema() + "\n"
+                    + "IMUL AX ," + nodo.getDer().getValor_constante() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigoFinal.add(codigo1);
+        }
         return "@aux"+contador_Variable_Auxiliar;
     }
 
     private String multiplicacion_Enteros_Ulong(Nodo nodo){
-        String codigo1 = "MOV EAX," + nodo.getIzq().getLexema() + "\n"
-                + "MUL EAX ," + nodo.getDer().getLexema() + "\n"
-                + "MOV @aux" + contador_Variable_Auxiliar +",EAX";
-        codigoFinal.add(codigo1);
+        if (nodo.getIzq().getValor_constante() == null && nodo.getDer().getValor_constante() == null) {
+            String codigo1 = "MOV EAX," + nodo.getIzq().getLexema() + "\n"
+                    + "MUL EAX ," + nodo.getDer().getLexema() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo1);
+        }
+        else if(nodo.getIzq().getValor_constante() != null){
+            String codigo1 = "MOV EAX," + nodo.getIzq().getValor_constante() + "\n"
+                    + "MUL EAX ," + nodo.getDer().getLexema() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo1);
+        }
+        else {
+            String codigo1 = "MOV EAX," + nodo.getIzq().getLexema() + "\n"
+                    + "MUL EAX ," + nodo.getDer().getValor_constante() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo1);
+        }
         return "@aux"+contador_Variable_Auxiliar;
     }
 
     private String multiplicacion_Pto_Flotante(Nodo nodo){
-        String codigo = "FLD " + nodo.getIzq().getLexema() + "\n"
-                + "FLD " + nodo.getDer().getLexema() + "\n"
-                + "FMUL \n"
-                + "FSTP @aux" + contador_Variable_Auxiliar;
+        String codigo;
+        if (nodo.getIzq().getValor_constante() == null && nodo.getDer().getValor_constante() == null) {
+             codigo = "FLD " + nodo.getIzq().getLexema() + "\n"
+                    + "FLD " + nodo.getDer().getLexema() + "\n"
+                    + "FMUL \n"
+                    + "FSTSW @aux" + contador_Variable_Auxiliar + "\n"
+                    + "MOV AX , " + "@aux" + contador_Variable_Auxiliar + "\n"
+                    + "SAHF\n"
+                    + "JO error_overflow_multiplicacion_double:\n";
+        }
+        else if(nodo.getIzq().getValor_constante() != null){
+             codigo = "FLD " + nodo.getIzq().getValor_constante() + "\n"
+                    + "FLD " + nodo.getDer().getLexema() + "\n"
+                    + "FMUL \n"
+                    + "FSTSW @aux" + contador_Variable_Auxiliar + "\n"
+                    + "MOV AX , " + "@aux" + contador_Variable_Auxiliar + "\n"
+                    + "SAHF\n"
+                    + "JO error_overflow_multiplicacion_double:\n";
+        }
+        else {
+             codigo = "FLD " + nodo.getIzq().getLexema() + "\n"
+                    + "FLD " + nodo.getDer().getValor_constante()+ "\n"
+                    + "FMUL \n"
+                    + "FSTSW @aux" + contador_Variable_Auxiliar + "\n"
+                    + "MOV AX , " + "@aux" + contador_Variable_Auxiliar + "\n"
+                    + "SAHF\n"
+                    + "JO error_overflow_multiplicacion_double:\n";
+        }
+        // agrego la variable auxiliara la tabla de simbolos
+        contador_Variable_Auxiliar++;
+        codigoFinal.add(codigo);
+        codigo = "FSTP @aux" + contador_Variable_Auxiliar;
         codigoFinal.add(codigo);
         return "@aux"+contador_Variable_Auxiliar;
     }
 
     private String division_Enteros_Int(Nodo nodo){
-        String codigo1 = "MOV AX," + nodo.getIzq().getLexema() + "\n"
-                + "CWD \n"
-                + "IDIV " + nodo.getDer().getLexema() + "\n"
-                + "MOV @aux" + contador_Variable_Auxiliar +",AX";
-        codigoFinal.add(codigo1);
+        if (nodo.getIzq().getValor_constante() == null && nodo.getDer().getValor_constante() == null) {
+            String codigo1 = "MOV AX," + nodo.getIzq().getLexema() + "\n"
+                    + "CWD \n"
+                    + "IDIV " + nodo.getDer().getLexema() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigoFinal.add(codigo1);
+        }
+        else if(nodo.getIzq().getValor_constante() != null){
+            String codigo1 = "MOV AX," + nodo.getIzq().getValor_constante() + "\n"
+                    + "CWD \n"
+                    + "IDIV " + nodo.getDer().getLexema() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigoFinal.add(codigo1);
+        }
+        else{
+            String codigo1 = "MOV AX," + nodo.getIzq().getLexema() + "\n"
+                    + "CWD \n"
+                    + "IDIV " + nodo.getDer().getValor_constante() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigoFinal.add(codigo1);
+        }
         return "@aux"+contador_Variable_Auxiliar;
     }
     private String division_Enteros_Ulong(Nodo nodo){
-        String codigo1 = "MOV EAX," + nodo.getIzq().getLexema() + "\n"
-                + "MOV EDX,0 \n"
-                + "DIV " + nodo.getDer().getLexema() + "\n"
-                + "MOV @aux" + contador_Variable_Auxiliar +",EAX";
-        codigoFinal.add(codigo1);
+        if (nodo.getIzq().getValor_constante() == null && nodo.getDer().getValor_constante() == null) {
+            String codigo1 = "MOV EAX," + nodo.getIzq().getLexema() + "\n"
+                    + "MOV EDX,0 \n"
+                    + "DIV " + nodo.getDer().getLexema() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo1);
+        }
+        else if(nodo.getIzq().getValor_constante() != null){
+            String codigo1 = "MOV EAX," + nodo.getIzq().getValor_constante() + "\n"
+                    + "MOV EDX,0 \n"
+                    + "DIV " + nodo.getDer().getLexema() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo1);
+        }
+        else{
+            String codigo1 = "MOV EAX," + nodo.getIzq().getLexema() + "\n"
+                    + "MOV EDX,0 \n"
+                    + "DIV " + nodo.getDer().getValor_constante() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo1);
+        }
         return "@aux"+contador_Variable_Auxiliar;
     }
     private String division_Pto_Flotante(Nodo nodo){
-        String codigo = "FLD " + nodo.getIzq().getLexema() + "\n"
-                + "FLD " + nodo.getDer().getLexema() + "\n"
-                + "FDIV \n"
-                + "FSTP @aux" + contador_Variable_Auxiliar;
-        codigoFinal.add(codigo);
+        if (nodo.getIzq().getValor_constante() == null && nodo.getDer().getValor_constante() == null) {
+            String codigo = "FLD " + nodo.getIzq().getLexema() + "\n"
+                    + "FLD " + nodo.getDer().getLexema() + "\n"
+                    + "FDIV \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigoFinal.add(codigo);
+        }
+        else if(nodo.getIzq().getValor_constante() != null){
+            String codigo = "FLD " + nodo.getIzq().getValor_constante() + "\n"
+                    + "FLD " + nodo.getDer().getLexema() + "\n"
+                    + "FDIV \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigoFinal.add(codigo);
+        }
+        else{
+            String codigo = "FLD " + nodo.getIzq().getLexema() + "\n"
+                    + "FLD " + nodo.getDer().getValor_constante() + "\n"
+                    + "FDIV \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigoFinal.add(codigo);
+        }
         return "@aux"+contador_Variable_Auxiliar;
     }
 
     private String resta_Enteros_INT(Nodo nodo){
-        String codigo = "MOV AX," + nodo.getIzq().getLexema() + "\n"
-                + "SUB AX ," + nodo.getDer().getLexema() + "\n"
-                + "MOV @aux" + contador_Variable_Auxiliar +",AX";
-        codigoFinal.add(codigo);
+        if (nodo.getIzq().getValor_constante() == null && nodo.getDer().getValor_constante() == null) {
+            String codigo = "MOV AX," + nodo.getIzq().getLexema() + "\n"
+                    + "SUB AX ," + nodo.getDer().getLexema() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigoFinal.add(codigo);
+        }
+        else if(nodo.getIzq().getValor_constante() != null){
+            String codigo = "MOV AX," + nodo.getIzq().getLexema() + "\n"
+                    + "SUB AX ," + nodo.getDer().getLexema() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigoFinal.add(codigo);
+        }
+        else{
+            String codigo = "MOV AX," + nodo.getIzq().getLexema() + "\n"
+                    + "SUB AX ," + nodo.getDer().getLexema() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigoFinal.add(codigo);
+        }
         return "@aux"+contador_Variable_Auxiliar;
     }
     private String resta_Enteros_Ulong(Nodo nodo){
-        String codigo = "MOV EAX," + nodo.getIzq().getLexema() + "\n"
-                + "SUB EAX ," + nodo.getDer().getLexema() + "\n"
-                + "JS error_rdo_negativo_resta_ulong \n" //CONTROLA QUE NO HAYA DADO NEGATIVO
-                + "MOV @aux" + contador_Variable_Auxiliar +",EAX";
-        codigoFinal.add(codigo);
+        if (nodo.getIzq().getValor_constante() == null && nodo.getDer().getValor_constante() == null) {
+            String codigo = "MOV EAX," + nodo.getIzq().getLexema() + "\n"
+                    + "SUB EAX ," + nodo.getDer().getLexema() + "\n"
+                    + "JS error_rdo_negativo_resta_ulong \n" //CONTROLA QUE NO HAYA DADO NEGATIVO
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo);
+        }
+        else if(nodo.getIzq().getValor_constante() != null){
+            String codigo = "MOV EAX," + nodo.getIzq().getValor_constante() + "\n"
+                    + "SUB EAX ," + nodo.getDer().getLexema() + "\n"
+                    + "JS error_rdo_negativo_resta_ulong \n" //CONTROLA QUE NO HAYA DADO NEGATIVO
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo);
+        }
+        else{
+            String codigo = "MOV EAX," + nodo.getIzq().getLexema() + "\n"
+                    + "SUB EAX ," + nodo.getDer().getValor_constante() + "\n"
+                    + "JS error_rdo_negativo_resta_ulong \n" //CONTROLA QUE NO HAYA DADO NEGATIVO
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo);
+        }
         return "@aux"+contador_Variable_Auxiliar;
     }
 
     private String resta_Pto_Flotante(Nodo nodo) {
-        String codigo = "FLD " + nodo.getIzq().getLexema() + "\n"
-                + "FLD " + nodo.getDer().getLexema() + "\n"
-                + "FSUB \n"
-                + "FSTP @aux" + contador_Variable_Auxiliar;
-        codigoFinal.add(codigo);
+        if (nodo.getIzq().getValor_constante() == null && nodo.getDer().getValor_constante() == null) {
+            String codigo = "FLD " + nodo.getIzq().getLexema() + "\n"
+                    + "FLD " + nodo.getDer().getLexema() + "\n"
+                    + "FSUB \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigoFinal.add(codigo);
+        }
+        else if(nodo.getIzq().getValor_constante() != null){
+            String codigo = "FLD " + nodo.getIzq().getLexema() + "\n"
+                    + "FLD " + nodo.getDer().getLexema() + "\n"
+                    + "FSUB \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigoFinal.add(codigo);
+        }
+        else{
+            String codigo = "FLD " + nodo.getIzq().getLexema() + "\n"
+                    + "FLD " + nodo.getDer().getLexema() + "\n"
+                    + "FSUB \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigoFinal.add(codigo);
+        }
         return "@aux" + contador_Variable_Auxiliar;
     }
     private String salto(){
@@ -383,17 +582,17 @@ public class GeneradorAssembler {
         String codigo;
         if(!(nodo.getDer().getLexema().contains("@")) | !(Character.isLetter(nodo.getDer().getDer().getLexema().charAt(0))) | (nodo.getDer().getLexema().startsWith("_"))) { //chequea que sea una constante
             if (nodo.getDer().getTipo().equals("INT")) {
-                codigo = "MOV AX," + nodo.getDer().getLexema() + "\n"
+                codigo = "MOV AX," + nodo.getDer().getValor_constante() + "\n"
                         + "MOV " + nodo.getIzq().getLexema() + ",AX";
                 codigoFinal.add(codigo);
             }
             else if (nodo.getDer().getTipo().equals("ULONG")) {
-                codigo = "MOV EAX," + nodo.getDer().getLexema() + "\n"
+                codigo = "MOV EAX," + nodo.getDer().getValor_constante() + "\n"
                         + "MOV " + nodo.getIzq().getLexema() + ",EAX";
                 codigoFinal.add(codigo);
             }
             else {
-                codigo = "MOV " + nodo.getIzq().getLexema() + "," + nodo.getDer().getLexema();
+                codigo = "MOV " + nodo.getIzq().getLexema() + "," + nodo.getDer().getValor_constante();
                 codigoFinal.add(codigo);
             }
         }
@@ -412,9 +611,9 @@ public class GeneradorAssembler {
             pila.add(codigo);
             contador_Label++;
             }
-
         ultimo_signo_comparacion = nodo.getLexema();
-        if (nodo.getTipo().equals("INT")) {
+        if (nodo.getIzq().getValor_constante() == null && nodo.getDer().getValor_constante() == null) {
+            if (nodo.getTipo().equals("INT")) {
                 codigo = "MOV AX," + nodo.getIzq().getLexema() + "\n"
                         + "CMP AX," + nodo.getDer().getLexema();
                 codigoFinal.add(codigo);
@@ -435,6 +634,53 @@ public class GeneradorAssembler {
                 contador_Variable_Auxiliar++;
                 condicion_Sentencia_Control_Sin_Signo();
             }
+        }
+        else if(nodo.getIzq().getValor_constante() != null){
+            if (nodo.getTipo().equals("INT")) {
+                codigo = "MOV AX," + nodo.getIzq().getValor_constante() + "\n"
+                        + "CMP AX," + nodo.getDer().getLexema();
+                codigoFinal.add(codigo);
+                condicion_Sentencia_Control_Signado();
+            } else if (nodo.getTipo().equals("ULONG")) {
+                codigo = "MOV EAX," + nodo.getIzq().getValor_constante() + "\n"
+                        + "CMP EAX," + nodo.getDer().getLexema();
+                codigoFinal.add(codigo);
+                condicion_Sentencia_Control_Sin_Signo();
+            } else {
+                codigo = "FLD " + nodo.getIzq().getValor_constante() + "\n"
+                        + "FCOM" + nodo.getDer().getLexema() + "\n"
+                        + "FSTSW @aux" + contador_Variable_Auxiliar + "\n" ///preguntar si el label del for deberia estar en la linea de abajo
+                        + "MOV AX,@aux" + contador_Variable_Auxiliar + "\n"
+                        + "SAHF";
+                codigoFinal.add(codigo);
+                //ACA SE TIENE QUE GUARDAR VARIABLE AUXILIAR EN TABLA DE SIMBOLOS.
+                contador_Variable_Auxiliar++;
+                condicion_Sentencia_Control_Sin_Signo();
+            }
+        }
+        else{
+            if (nodo.getTipo().equals("INT")) {
+                codigo = "MOV AX," + nodo.getIzq().getLexema() + "\n"
+                        + "CMP AX," + nodo.getDer().getValor_constante();
+                codigoFinal.add(codigo);
+                condicion_Sentencia_Control_Signado();
+            } else if (nodo.getTipo().equals("ULONG")) {
+                codigo = "MOV EAX," + nodo.getIzq().getLexema() + "\n"
+                        + "CMP EAX," + nodo.getDer().getValor_constante();
+                codigoFinal.add(codigo);
+                condicion_Sentencia_Control_Sin_Signo();
+            } else {
+                codigo = "FLD " + nodo.getIzq().getLexema() + "\n"
+                        + "FCOM" + nodo.getDer().getValor_constante() + "\n"
+                        + "FSTSW @aux" + contador_Variable_Auxiliar + "\n" ///preguntar si el label del for deberia estar en la linea de abajo
+                        + "MOV AX,@aux" + contador_Variable_Auxiliar + "\n"
+                        + "SAHF";
+                codigoFinal.add(codigo);
+                //ACA SE TIENE QUE GUARDAR VARIABLE AUXILIAR EN TABLA DE SIMBOLOS.
+                contador_Variable_Auxiliar++;
+                condicion_Sentencia_Control_Sin_Signo();
+            }
+        }
         return "";
     }
 

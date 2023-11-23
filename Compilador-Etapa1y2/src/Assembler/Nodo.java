@@ -7,12 +7,15 @@ public class Nodo {
     private String lexema = "";
     private String tipo;
 
-    public Nodo(final Nodo izq, final Nodo der,final Nodo uni, final String lexema,final String tipo) {
+    private String valor_constante;
+
+    public Nodo(final Nodo izq, final Nodo der,final Nodo uni, final String lexema,final String tipo,final String valor_constante) {
         this.izq = izq;
         this.der = der;
         this.lexema = lexema;
         this.tipo = tipo;
         this.uni = uni;
+        this.valor_constante = valor_constante;
     }
     public Nodo(final Nodo izq, final Nodo der,final Nodo uni, final String lexema) {
         this.izq = izq;
@@ -23,6 +26,14 @@ public class Nodo {
 
     public Nodo() {
 
+    }
+
+    public String getValor_constante() {
+        return this.valor_constante;
+    }
+
+    public void setValor_constante(final String valor_constante) {
+        this.valor_constante = valor_constante;
     }
 
     public Nodo getIzq() {
