@@ -196,6 +196,13 @@ public class AnalizadorLexico {
 		}
 		System.out.println();	
 	}
+	
+	public static boolean hayErrores() {
+		for (int i = 0; i < errores_y_warnings.size(); i++)
+			if (errores_y_warnings.get(i).contains("ERROR"))
+				return true; //si al menos uno de las entradas de la tabla de simbolos contiene la subcadena "ERROR", eso quiere decir que hubo por lo menos algun error, ya sea lexico, sintactico o semantico. Si la entrada no tuviera esa subcadena, indefectiblemente tendria la subcadena "WARNING", pero los warnings no son errores
+		return false;
+	}
 
 	public void eliminarConstanteTS(String constante_fuera_rango) { //esta funcion se encarga de eliminar una constante de la tabla de simbolos, y es usada por el parser cuando detecta que una constante entera simple se encuentra fuera de rango
 		simbolos.remove(constante_fuera_rango);

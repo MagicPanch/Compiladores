@@ -3,6 +3,7 @@ import java.util.ArrayList;
 
 import analizadorSintactico.analizadorLexico.AnalizadorLexico;
 import analizadorSintactico.analizadorLexico.AtributosSimbolo;
+import analizadorSintactico.generadorCodigoIntermedio.ParVariableAtributo;
 
 public class AnalizadorSemantico {
 	public static String ambito_actual = "main";
@@ -13,6 +14,7 @@ public class AnalizadorSemantico {
 	public static int cantidad_prototipos_interfaz_actual = 0;
 	public static int cantidad_prototipos_interfaz_utilizados = 0;
 	public static ArrayList<DatosAnidamiento> metodos_actuales_anidamientos = new ArrayList<DatosAnidamiento>();
+	public static String lexema_invocacion_metodo_actual = null;
 	
 	public AnalizadorSemantico() {}
 	
@@ -485,7 +487,9 @@ public class AnalizadorSemantico {
 			return ambito.substring(0, posicion_ultimo_ambito_clase);
 		else if (posicion_ultimo_ambito_impl > posicion_ultimo_ambito_interfaz)
 			return ambito.substring(0, posicion_ultimo_ambito_impl);
-		return ambito.substring(0, posicion_ultimo_ambito_interfaz);
+		else if (posicion_ultimo_ambito_interfaz > posicion_ultimo_ambito_impl)
+			return ambito.substring(0, posicion_ultimo_ambito_interfaz);
+		return null;
 	}
 	
 	private boolean coincideUso(ArrayList<String> usos_validos, String uso_real) {
@@ -654,8 +658,36 @@ public class AnalizadorSemantico {
 		}
 	}
 	
+	private String obtenerAmbitoClaseImplementada() {
+		String tipo_ambito = obtenerTipoAmbitoContenedor(ambito_actual);
+		if (tipo_ambito.equals("ambito_simple")) {
+			String ambito_superior = obtenerLexemaAmbitoSuperior(ambito_actual);
+			if (ambito_superior != null && obtenerTipoAmbitoContenedor(ambito_superior).equals("ambito_clausula_impl")) { //si el ambito contenedor es un ambito_simple y a su vez el ambito contenedor superior es un ambito_clausula_impl, es porque la referencia se encontro de una funcion de clausula IMPL. En este caso, hay que tener en cuenta que la referencia puede no existir en ese ambito pero si en la clase de la cual se implementan sus metodos, lo que implica tener que buscarlo ahi (ya que en teoria habria que poder usar por ejemplo los atributos de esa clase)
+				String nombre_clase_implementada = ambito_superior.substring(ambito_superior.lastIndexOf("<")+1, ambito_superior.length()-1);
+				String ambito_superior_clausula = obtenerLexemaAmbitoSuperior(ambito_superior); //es el ambito donde esta contenida la clausula
+				if (ambito_superior_clausula != null) {
+					ArrayList<String> uso_clase = new ArrayList<String>();
+					uso_clase.add("nombre_clase");
+					String lexema_clase_implementada_nm = obtenerLexemaNmMasCercano(nombre_clase_implementada, uso_clase, ambito_superior_clausula); //se busca el lexema nm perteneciente a la clase que la clausula IMPL esta implementando
+					if (lexema_clase_implementada_nm != null) {
+						String ambito_clase_implementada = lexema_clase_implementada_nm.substring(lexema_clase_implementada_nm.indexOf(":")+1, lexema_clase_implementada_nm.length()) + "(" + nombre_clase_implementada + ")";
+						return ambito_clase_implementada;
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
+	private String obtenerReferenciaEnAmbitoClaseAsociada(String referencia, ArrayList<String> usos) { //este metodo permite buscar una referencia en el ambito de una clase asociada a una clausula IMPL, ya que si dentro de una funcion de clausula IMPL no se encuentra una referencia, tranquilamente puede estar en la clase que contiene realmente al prototipo de metodo que implementa
+		String ambito_clase_implementada = obtenerAmbitoClaseImplementada();
+		if (ambito_clase_implementada != null)
+			return obtenerLexemaNmMasCercano(referencia, usos, ambito_clase_implementada); //se busca en el ambito de la clase implementada esa referencia, con los mismos usos que en un principio
+		return null;
+	}
+	
 	public String verificarReferenciaValida(String referencia, boolean debeSerFuncion) {
-		if (esAmbitoValido()) {
+		if (esAmbitoValido() && referencia != null) {
 			ArrayList<String> usos = new ArrayList<String>();
 			if (debeSerFuncion) {
 				int posicion_ultima_referencia = referencia.lastIndexOf(".");
@@ -675,14 +707,37 @@ public class AnalizadorSemantico {
 							AtributosSimbolo atributos_metodo_nm = AnalizadorLexico.simbolos.get(lexema_metodo_nm);
 							if (atributos_metodo_nm == null || (!atributos_metodo_nm.getUso().equals("nombre_metodo") && !atributos_metodo_nm.getUso().equals("nombre_prototipo_metodo")))
 								AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: No existe ningun metodo al alcance que pueda accederse como '" + referencia + "'");		
-							else
+							else {
+								lexema_invocacion_metodo_actual = referencia;
 								return lexema_metodo_nm;
+							}
 						}
 						else
 							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: No existe ningun metodo al alcance que pueda accederse como '" + referencia + "'");
 					}
-					else
-						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: No existe ningun metodo al alcance que pueda accederse como '" + referencia + "'");
+					else {
+						atributos_prefijo_nm = AnalizadorLexico.simbolos.get(obtenerReferenciaEnAmbitoClaseAsociada(prefijo_referencia_metodo, usos));
+						if (atributos_prefijo_nm != null) {
+							String lexema_clase_asociada_nm = atributos_prefijo_nm.getLexemaClaseAsociada();
+							if (lexema_clase_asociada_nm != null) {
+								int posicion_primer_ambito_clase = lexema_clase_asociada_nm.indexOf(":");
+								String nombre_clase = lexema_clase_asociada_nm.substring(0, posicion_primer_ambito_clase);
+								String nombre_metodo = referencia.substring(posicion_ultima_referencia+1, referencia.length());
+								String lexema_metodo_nm = nombre_metodo + ":" + lexema_clase_asociada_nm.substring(posicion_primer_ambito_clase+1, lexema_clase_asociada_nm.length()) + "(" + nombre_clase + ")";
+								AtributosSimbolo atributos_metodo_nm = AnalizadorLexico.simbolos.get(lexema_metodo_nm);
+								if (atributos_metodo_nm == null || (!atributos_metodo_nm.getUso().equals("nombre_metodo") && !atributos_metodo_nm.getUso().equals("nombre_prototipo_metodo")))
+									AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: No existe ningun metodo al alcance que pueda accederse como '" + referencia + "'");		
+								else {
+									lexema_invocacion_metodo_actual = referencia;
+									return lexema_metodo_nm;
+								}
+							}
+							else
+								AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: No existe ningun metodo al alcance que pueda accederse como '" + referencia + "'");
+						}
+						else
+							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: No existe ningun metodo al alcance que pueda accederse como '" + referencia + "'");
+					}
 				}
 				else {
 					usos.add("nombre_funcion");
@@ -691,8 +746,12 @@ public class AnalizadorSemantico {
 					usos.add("nombre_prototipo_metodo");
 					usos.add("nombre_funcion_clausula_impl");
 					String lexema_funcion_nm = obtenerLexemaNmMasCercano(referencia, usos, ambito_actual);
-					if (lexema_funcion_nm == null)
+					if (lexema_funcion_nm == null) {
+						lexema_funcion_nm = obtenerReferenciaEnAmbitoClaseAsociada(referencia, usos);
+						if (lexema_funcion_nm != null)
+							return lexema_funcion_nm;
 						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: No existe ninguna funcion, metodo o prototipo al alcance que pueda accederse como '" + referencia + "'");
+					}
 					else
 						return lexema_funcion_nm;
 				}
@@ -702,8 +761,12 @@ public class AnalizadorSemantico {
 				usos.add("nombre_atributo");
 				usos.add("nombre_parametro_formal");
 				String lexema_referencia_nm = obtenerLexemaNmMasCercano(referencia, usos, ambito_actual);
-				if (lexema_referencia_nm == null)
+				if (lexema_referencia_nm == null) {
+					lexema_referencia_nm = obtenerReferenciaEnAmbitoClaseAsociada(referencia, usos);
+					if (lexema_referencia_nm != null)
+						return lexema_referencia_nm;
 					AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Referencia invalida, no existe ninguna variable o atributo con nombre '" + referencia + "' al alcance");
+				}
 				else
 					return lexema_referencia_nm;
 			}
@@ -773,7 +836,7 @@ public class AnalizadorSemantico {
 	}
 	
 	public void verificarValidezVariableControlFor(String variable_control) {
-		if (esAmbitoValido()) {
+		if (esAmbitoValido() && variable_control != null) { //si la variable de control es null, entonces ya hay un error previo
 			ArrayList<String> usos = new ArrayList<String>();
 			usos.add("nombre_variable");
 			usos.add("nombre_atributo");
@@ -836,6 +899,28 @@ public class AnalizadorSemantico {
 		}
 	}
 	
+	public String obtenerComparadorAsociado(String constante_variacion) { //permite obtener cual es el comparador de la condicion implicita del FOR
+		if (esAmbitoValido() && constante_variacion != null) {
+			AtributosSimbolo atributos_constante_variacion = AnalizadorLexico.simbolos.get(constante_variacion);
+			if (atributos_constante_variacion != null && (atributos_constante_variacion.getTipo().equals("INT") || atributos_constante_variacion.getTipo().equals("ULONG"))) {
+				if (constante_variacion.charAt(0) == '-')
+					return ">"; //ya que si la constante de variacion inicia con un "-", se decrementa en cada iteracion la variable de control y por ende se supone que el FOR se ejecuta hasta que sea mayor a la variable de finalizacion
+				else
+					return "<"; //ya que si la constante de variacion no inicia con un "-", se incrementa en cada iteracion la variable de control y por ende se supone que el FOR se ejecuta hasta que sea menor a la variable de finalizacion
+			}
+		}
+		return null;
+	}
+	
+	public String obtenerConstanteControladoresFor(String controladores_for, int posicion_constante) { //permite obtener alguna de las constantes de los controladores del FOR, donde cada constante se encuentra separada por " ", debido a como se guardo el sval del controlador
+		if (esAmbitoValido() && controladores_for != null) {
+			String[] partes_controlador = controladores_for.split(" ");
+			if (partes_controlador.length == 3) //porque si es valido deberia haber 3 constantes
+				return partes_controlador[posicion_constante];
+		}
+		return null;
+	}
+	
 	public void chequearValidezOperacionComparacionExpresiones(String expresion1, String expresion2, boolean es_comparacion, boolean es_suma) {
 		if (esAmbitoValido()) {
 			String tipo_expresion1 = determinarTipo(expresion1);
@@ -866,8 +951,8 @@ public class AnalizadorSemantico {
 						else
 							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Operacion invalida, no puede efectuarse una division entre un " + tipo_termino + " y un " + tipo_factor);
 					}
-					else if (tipo_termino.equals(tipo_factor) && (tipo_termino.equals("INT") || tipo_termino.equals("ULONG")) && !es_multiplicacion) //es el caso de la division entre dos operandos validos e iguales que no son de tipo DOUBLE, por lo cual se genera un WARNING indicando que el resultado sera de tipo DOUBLE
-						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - WARNING: Se efectuo una division entre dos operandos de tipo " + tipo_termino + ", pero el resultado sera de tipo DOUBLE");
+					//else if (tipo_termino.equals(tipo_factor) && (tipo_termino.equals("INT") || tipo_termino.equals("ULONG")) && !es_multiplicacion) //es el caso de la division entre dos operandos validos e iguales que no son de tipo DOUBLE, por lo cual se genera un WARNING indicando que el resultado sera de tipo DOUBLE
+						//AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - WARNING: Se efectuo una division entre dos operandos de tipo " + tipo_termino + ", pero el resultado sera de tipo DOUBLE");
 				}
 			}
 		}
@@ -882,7 +967,7 @@ public class AnalizadorSemantico {
 				String lexema_primer_elemento = elementos_expresion[0];
 				AtributosSimbolo atributos_primer_elemento = AnalizadorLexico.simbolos.get(lexema_primer_elemento);
 				if (atributos_primer_elemento != null) //si no hubo error no tendria sentido que sea null
-					return atributos_primer_elemento.getTipo(); //dado que si no hay una barra de division (que es la unica que puede cambiar el tipo de la expresion aunque los operandos sean de otro tipo) y no hubo error, el tipo de la expresion indefectiblemente tiene que ser igual al del primer operando
+					return atributos_primer_elemento.getTipo(); //dado que si no hay una barra de division, el tipo de la expresion indefectiblemente tiene que ser igual al del primer operando
 			}
 		}
 		return null;
@@ -950,6 +1035,89 @@ public class AnalizadorSemantico {
 				}
 			}		
 		}
+	}
+	
+	public String obtenerFuncionInvocada(String lexema_funcion_nm) { //este metodo permite obtener la funcion que realmente se invoco, ya que si por ejemplo se invoca a un prototipo, es necesario obtener el lexema de la funcion que realmente lo implementa
+		if (esAmbitoValido() && lexema_funcion_nm != null) {
+			AtributosSimbolo atributos_lexema_funcion_nm = AnalizadorLexico.simbolos.get(lexema_funcion_nm);
+			if (atributos_lexema_funcion_nm != null) {
+				String lexema_funcion_implementadora_nm = atributos_lexema_funcion_nm.getLexemaFuncionImplementacion();
+				if (lexema_funcion_implementadora_nm != null)
+					return lexema_funcion_implementadora_nm;
+				return lexema_funcion_nm;
+			}
+		}
+		return null;
+	}
+	
+	public String obtenerLexemaCompletoID(String id) { //permite devolver el nombre completo con lexema nm de un id
+		if (esAmbitoValido() && id != null)
+			return id + ":" + ambito_actual; //el ambito actual es el nm del id en la tabla de simbolos
+		return null;
+	}
+	
+	public ArrayList<String> obtenerVariablesInstanciaInvocacion() {
+		if (esAmbitoValido() && lexema_invocacion_metodo_actual != null) {
+			int posicion_invocacion = lexema_invocacion_metodo_actual.lastIndexOf(".");
+			if (posicion_invocacion != -1) { //igual no deberia ser -1, ya que si el lexema de la invocacion de metodo actual no es null, es porque tiene que contener al menor un ".", de lo contrario no seria una invocacion a un metodo de una clase a partir de una instancia 
+				ArrayList<String> variables_instancia_invocacion = new ArrayList<String>();
+				String prefijo_variables = lexema_invocacion_metodo_actual.substring(0, posicion_invocacion);
+				for (String key: AnalizadorLexico.simbolos.keySet()) {
+					AtributosSimbolo atributos_clave_nm = AnalizadorLexico.simbolos.get(key);
+					if (atributos_clave_nm != null && atributos_clave_nm.getUso() != null && atributos_clave_nm.getTipo() != null && (atributos_clave_nm.getUso().equals("nombre_variable") || atributos_clave_nm.getUso().equals("nombre_atributo")) && (atributos_clave_nm.getTipo().equals("INT") || atributos_clave_nm.getTipo().equals("ULONG") || atributos_clave_nm.getTipo().equals("DOUBLE"))) { //ya que las variables de una instancia usada para una invocacion pueden ser variables simples, o atributos de una clase en caso de que la instancia en si sea un atributo de una clase. Ademas, solo sirve mapear sus valores a los atributos reales si son de un tipo numerico
+						if (key.startsWith(prefijo_variables)) {
+							int posicion_ambito_clave_nm = key.indexOf(":");
+							if (posicion_ambito_clave_nm != -1) { //no deberia ser -1 de todos modos
+								String ambito_clave_nm = key.substring(posicion_ambito_clave_nm+1, key.length());
+								if (ambito_actual.contains(ambito_clave_nm)) //dado que las instancias pueden haberse declarado en el ambito actual o en uno en el que este contenido
+									variables_instancia_invocacion.add(key); //ya que llegado a este punto quiere decir que se trata de una variable generada por la instancia que corresponde a un atributo de la clase del metodo invocado
+								else {
+									String ambito_clase_implementada = obtenerAmbitoClaseImplementada();
+									if (ambito_clase_implementada != null && ambito_clase_implementada.contains(ambito_clave_nm)) //es el caso de que se este queriendo invocar a un metodo de una clase dentro de una funcion de una clausula IMPL, pero a traves de una instancia de una clase declarada en la clase que se esta implementando y no en la funcion implementadora que esta en el ambito de la clausula IMPL
+										variables_instancia_invocacion.add(key);
+								}
+							}
+						}
+					}
+				}
+				lexema_invocacion_metodo_actual = null; //ya que ya se analizo la invocacion actual
+				return variables_instancia_invocacion;
+			}
+		}
+		lexema_invocacion_metodo_actual = null;
+		return null;
+	}
+	
+	public ArrayList<ParVariableAtributo> obtenerParesMapeoInvocacion(String lexema_metodo, ArrayList<String> variables_instancia) {
+		if (esAmbitoValido() && lexema_metodo != null) {
+			ArrayList<ParVariableAtributo> pares_mapeo_invocacion = new ArrayList<ParVariableAtributo>();
+			if (variables_instancia != null) {
+				int posicion_ambito_metodo_nm = lexema_metodo.indexOf(":");
+				if (posicion_ambito_metodo_nm != -1) { //no deberia ser -1
+					String ambito_metodo_nm = lexema_metodo.substring(posicion_ambito_metodo_nm+1, lexema_metodo.length());
+					if (esDeClase(ambito_metodo_nm)) {
+						for (String variable: variables_instancia) {
+							String lexema_atributo_nm = variable.substring(variable.lastIndexOf(".")+1, variable.indexOf(":")) + ":" + ambito_metodo_nm;
+							System.out.print(lexema_atributo_nm);
+							AtributosSimbolo atributos_lexema_atributo_nm = AnalizadorLexico.simbolos.get(lexema_atributo_nm);
+							if (atributos_lexema_atributo_nm != null && atributos_lexema_atributo_nm.getUso().equals("nombre_atributo")) //en teoria deberia cumplirse siempre si se llego hasta aca
+								pares_mapeo_invocacion.add(new ParVariableAtributo(variable, lexema_atributo_nm));
+						}
+					}
+				}
+			}
+			return pares_mapeo_invocacion;
+		}
+		return null;
+	}
+	
+	public String obtenerTipoElemento(String elemento) {
+		if (elemento != null) {
+			AtributosSimbolo atributos_constante = AnalizadorLexico.simbolos.get(elemento);
+			if (atributos_constante != null)
+				return atributos_constante.getTipo();
+		}
+		return null;
 	}
 	
 }

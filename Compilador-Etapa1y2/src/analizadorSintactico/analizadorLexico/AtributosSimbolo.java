@@ -14,6 +14,7 @@ public class AtributosSimbolo {
 	private boolean variable_referenciada = false;
 	private String lexema_clase_asociada = null;
 	private ArrayList<String> lexemas_clases_heredadas = new ArrayList<String>(); //sirve para almacenar el conjunto de clases heredadas por composicion por otra clase (sirve para chequeos semanticos)
+	private String cadena_caracteres_print = null; //usado para las variables que contienen las cadenas de caracteres a imprimir en el codigo Assembler
 	
 	public AtributosSimbolo(int token) {
 		this.token = token;
@@ -33,6 +34,11 @@ public class AtributosSimbolo {
 		this.token = token;
 		this.cantidad = cantidad;
 		this.tipo = tipo;
+	}
+
+	public AtributosSimbolo(String tipo, String cadena_caracteres_print) {
+		this.tipo = tipo;
+		this.cadena_caracteres_print = cadena_caracteres_print;
 	}
 
 	public int getToken() {
@@ -122,7 +128,15 @@ public class AtributosSimbolo {
 	
 	public ArrayList<String> getClasesHeredadas() {
 		return this.lexemas_clases_heredadas;
-	} 
+	}
+
+	public String getCadenaCaracteresPrint() {
+		return cadena_caracteres_print;
+	}
+
+	public void setCadenaCaracteresPrint(String cadena_caracteres_print) {
+		this.cadena_caracteres_print = cadena_caracteres_print;
+	}
 
 	public void incrementarCantidad() {
 		cantidad++;

@@ -1,4 +1,5 @@
 package analizadorSintactico;
+import analizadorSintactico.generadorCodigoIntermedio.Nodo;
 
 //#############################################
 //## file: Parser.java
@@ -29,7 +30,7 @@ public String sval;
 /**
 * object value of this 'union'
 */
-public Object obj;
+public Nodo nodo;
 
 //#############################################
 //## C O N S T R U C T O R S
@@ -67,9 +68,9 @@ sval=val;
 /**
 * Initialize me as an Object
 */
-public ParserVal(Object val)
+public ParserVal(Nodo val)
 {
-obj=val;
+nodo=val;
 }
 }//end class
 
