@@ -22,6 +22,22 @@ public class GeneradorCodigoIntermedio {
 		return null;
 	}
 	
+	public static Nodo getNodoPrograma() {
+		return nodo_programa;
+	}
+
+	public static void setNodoPrograma(Nodo nodo_programa) {
+		GeneradorCodigoIntermedio.nodo_programa = nodo_programa;
+	}
+
+	public static ArrayList<Nodo> getFunciones() {
+		return funciones;
+	}
+
+	public static void setFunciones(ArrayList<Nodo> funciones) {
+		GeneradorCodigoIntermedio.funciones = funciones;
+	}
+
 	public void imprimirArbol() {
 		System.out.println();
 		System.out.println("------------------------PROGRAMA------------------------");
@@ -40,6 +56,8 @@ public class GeneradorCodigoIntermedio {
         if (nodo != null) {
             System.out.print(espacio_identacion);
             System.out.print(nodo.getSimbolo());
+            //if (nodo.getParametroFormalAsociado() != null)
+            	//System.out.print("------" + nodo.getParametroFormalAsociado() + "------");
             //ArrayList<ParVariableAtributo> pares = nodo.getParesVariableAtributo();
             //if (pares != null)
             	//for (ParVariableAtributo par: pares)

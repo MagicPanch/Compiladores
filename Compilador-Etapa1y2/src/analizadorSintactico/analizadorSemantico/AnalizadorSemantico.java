@@ -1120,4 +1120,16 @@ public class AnalizadorSemantico {
 		return null;
 	}
 	
+	public String obtenerParametroFormalFuncion(String lexema_funcion) {
+		AtributosSimbolo atributos_lexema_funcion_nm = AnalizadorLexico.simbolos.get(lexema_funcion);
+		if (atributos_lexema_funcion_nm != null) {
+			String nombre_parametro_formal = atributos_lexema_funcion_nm.getNombreParametroFormal();
+			if (nombre_parametro_formal != null) {
+				int posicion_ambito_funcion = lexema_funcion.indexOf(":");
+				return nombre_parametro_formal + ":" + lexema_funcion.substring(posicion_ambito_funcion+1, lexema_funcion.length()) + ":" + lexema_funcion.substring(0, posicion_ambito_funcion);
+			}
+		}
+		return null;
+	}
+	
 }

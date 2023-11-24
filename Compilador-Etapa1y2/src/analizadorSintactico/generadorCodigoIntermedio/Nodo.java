@@ -8,6 +8,7 @@ public class Nodo {
 	private String valor_constante = null;
 	private String tipo = null;
 	private ArrayList<ParVariableAtributo> pares_variable_atributo = new ArrayList<ParVariableAtributo>(); //se usa para el caso de los CALL, en caso de que la funcion invocada sea un metodo, para poder asignar el valor de las variables a los atributos y viceversa al finalizar el metodo
+	private String parametro_formal_asociado = null; //se usa para guardar en un nodo de PARAMETRO_REAL, el lexema nm del parametro formal al que esta asociado
 	private Nodo nodo_hijo_derecho = null;
 	private Nodo nodo_hijo_izquierdo = null;
 	private Nodo nodo_hijo_unidireccional = null;
@@ -69,6 +70,14 @@ public class Nodo {
 
 	public void setParesVariableAtributo(ArrayList<ParVariableAtributo> pares_variable_atributo) {
 		this.pares_variable_atributo = pares_variable_atributo;
+	}
+	
+	public String getParametroFormalAsociado() {
+		return parametro_formal_asociado;
+	}
+
+	public void setParametroFormalAsociado(String parametro_formal_asociado) {
+		this.parametro_formal_asociado = parametro_formal_asociado;
 	}
 
 	public Nodo getNodoHijoDerecho() {

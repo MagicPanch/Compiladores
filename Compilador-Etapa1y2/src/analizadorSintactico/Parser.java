@@ -1024,7 +1024,8 @@ Nodo obtenerNodoExpresion(String operador, Nodo operando_1, Nodo operando_2) { /
     return null;
 }
 
-//#line 954 "Parser.java"
+
+//#line 955 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -1644,7 +1645,7 @@ case 139:
 break;
 case 140:
 //#line 287 "Gramatica.y"
-{System.out.print("(INVOCACION A FUNCION) "); analizador_semantico.chequearInvocacionFuncionValida(analizador_semantico.verificarReferenciaValida(val_peek(2).sval, true), val_peek(1).sval); String funcion_invocada = analizador_semantico.obtenerFuncionInvocada(val_peek(2).sval); yyval.nodo = generador_codigo_intermedio.generarNodo("CALL", generador_codigo_intermedio.generarNodo(funcion_invocada, null, null), val_peek(1).nodo); if (yyval.nodo != null) yyval.nodo.setParesVariableAtributo(analizador_semantico.obtenerParesMapeoInvocacion(funcion_invocada, analizador_semantico.obtenerVariablesInstanciaInvocacion()));}
+{System.out.print("(INVOCACION A FUNCION) "); analizador_semantico.chequearInvocacionFuncionValida(analizador_semantico.verificarReferenciaValida(val_peek(2).sval, true), val_peek(1).sval); String funcion_invocada = analizador_semantico.obtenerFuncionInvocada(val_peek(2).sval); yyval.nodo = generador_codigo_intermedio.generarNodo("CALL", generador_codigo_intermedio.generarNodo(funcion_invocada, null, null), val_peek(1).nodo); if (yyval.nodo != null) {yyval.nodo.setParesVariableAtributo(analizador_semantico.obtenerParesMapeoInvocacion(funcion_invocada, analizador_semantico.obtenerVariablesInstanciaInvocacion())); if (val_peek(1).nodo != null && val_peek(1).nodo.getNodoHijoUnidireccional() != null) val_peek(1).nodo.getNodoHijoUnidireccional().setParametroFormalAsociado(analizador_semantico.obtenerParametroFormalFuncion(funcion_invocada));};}
 break;
 case 141:
 //#line 291 "Gramatica.y"
@@ -1676,7 +1677,7 @@ case 147:
 break;
 case 148:
 //#line 310 "Gramatica.y"
-{System.out.print("(CLAUSULA DE SELECCION IF SIN POSIBLES RETORNOS Y SIN ELSE) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(3).nodo, generador_codigo_intermedio.generarNodo("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(2).nodo), generador_codigo_intermedio.generarNodoUnidireccional("ELSE", null)));}
+{System.out.print("(CLAUSULA DE SELECCION IF SIN POSIBLES RETORNOS Y SIN ELSE) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(3).nodo, generador_codigo_intermedio.generarNodoUnidireccional("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(2).nodo)));}
 break;
 case 149:
 //#line 311 "Gramatica.y"
@@ -1684,7 +1685,7 @@ case 149:
 break;
 case 150:
 //#line 315 "Gramatica.y"
-{System.out.print("(CLAUSULA DE SELECCION IF DE RETORNO PARCIAL Y SIN ELSE) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(3).nodo, generador_codigo_intermedio.generarNodo("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(2).nodo), generador_codigo_intermedio.generarNodoUnidireccional("ELSE", null)));}
+{System.out.print("(CLAUSULA DE SELECCION IF DE RETORNO PARCIAL Y SIN ELSE) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(3).nodo, generador_codigo_intermedio.generarNodoUnidireccional("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(2).nodo)));}
 break;
 case 151:
 //#line 316 "Gramatica.y"
@@ -1700,7 +1701,7 @@ case 153:
 break;
 case 154:
 //#line 319 "Gramatica.y"
-{System.out.print("(CLAUSULA DE SELECCION IF DE RETORNO COMPLETO Y SIN ELSE) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(3).nodo, generador_codigo_intermedio.generarNodo("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(2).nodo), generador_codigo_intermedio.generarNodoUnidireccional("ELSE", null)));}
+{System.out.print("(CLAUSULA DE SELECCION IF DE RETORNO COMPLETO Y SIN ELSE) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(3).nodo, generador_codigo_intermedio.generarNodoUnidireccional("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(2).nodo)));}
 break;
 case 155:
 //#line 320 "Gramatica.y"
@@ -1816,7 +1817,7 @@ case 182:
 break;
 case 183:
 //#line 380 "Gramatica.y"
-{System.out.print("(SENTENCIA FOR) "); analizador_semantico.chequearCompatibilidadControladoresFor(val_peek(2).sval, val_peek(1).sval); if (val_peek(1).nodo != null) val_peek(1).nodo.getNodoHijoIzquierdo().setSimbolo(val_peek(2).sval); yyval.nodo = generador_codigo_intermedio.generarNodo("FOR", generador_codigo_intermedio.generarNodo("=", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoConstante(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 0), analizador_semantico.obtenerTipoElemento(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2)))), generador_codigo_intermedio.generarNodo("BUCLE", generador_codigo_intermedio.generarNodoUnidireccional("CONDICION", val_peek(1).nodo), generador_codigo_intermedio.generarNodo("CUERPO_FOR", val_peek(0).nodo, generador_codigo_intermedio.generarNodo("=", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoExpresion("+", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoConstante(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2), analizador_semantico.obtenerTipoElemento(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2))))))));}
+{System.out.print("(SENTENCIA FOR) "); analizador_semantico.chequearCompatibilidadControladoresFor(val_peek(2).sval, val_peek(1).sval); if (val_peek(1).nodo != null) val_peek(1).nodo.getNodoHijoIzquierdo().setSimbolo(val_peek(2).sval); yyval.nodo = generador_codigo_intermedio.generarNodo("FOR", generador_codigo_intermedio.generarNodo("=", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoConstante(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 0), analizador_semantico.obtenerTipoElemento(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2)))), generador_codigo_intermedio.generarNodo("BUCLE", generador_codigo_intermedio.generarNodoUnidireccional("CONDICION_FOR", val_peek(1).nodo), generador_codigo_intermedio.generarNodo("CUERPO_FOR", val_peek(0).nodo, generador_codigo_intermedio.generarNodo("=", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoExpresion("+", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoConstante(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2), analizador_semantico.obtenerTipoElemento(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2))))))));}
 break;
 case 184:
 //#line 384 "Gramatica.y"
@@ -1832,7 +1833,7 @@ case 186:
 break;
 case 187:
 //#line 390 "Gramatica.y"
-{System.out.print("(SENTENCIA FOR CON SENTENCIA EJECUTABLE DE RETORNO PARCIAL) "); analizador_semantico.chequearCompatibilidadControladoresFor(val_peek(2).sval, val_peek(1).sval); if (val_peek(1).nodo != null) val_peek(1).nodo.getNodoHijoIzquierdo().setSimbolo(val_peek(2).sval); yyval.nodo = generador_codigo_intermedio.generarNodo("FOR", generador_codigo_intermedio.generarNodo("=", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoConstante(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 0), analizador_semantico.obtenerTipoElemento(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2)))), generador_codigo_intermedio.generarNodo("BUCLE", generador_codigo_intermedio.generarNodoUnidireccional("CONDICION", val_peek(1).nodo), generador_codigo_intermedio.generarNodo("CUERPO_FOR", val_peek(0).nodo, generador_codigo_intermedio.generarNodo("=", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoExpresion("+", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoConstante(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2), analizador_semantico.obtenerTipoElemento(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2))))))));}
+{System.out.print("(SENTENCIA FOR CON SENTENCIA EJECUTABLE DE RETORNO PARCIAL) "); analizador_semantico.chequearCompatibilidadControladoresFor(val_peek(2).sval, val_peek(1).sval); if (val_peek(1).nodo != null) val_peek(1).nodo.getNodoHijoIzquierdo().setSimbolo(val_peek(2).sval); yyval.nodo = generador_codigo_intermedio.generarNodo("FOR", generador_codigo_intermedio.generarNodo("=", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoConstante(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 0), analizador_semantico.obtenerTipoElemento(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2)))), generador_codigo_intermedio.generarNodo("BUCLE", generador_codigo_intermedio.generarNodoUnidireccional("CONDICION_FOR", val_peek(1).nodo), generador_codigo_intermedio.generarNodo("CUERPO_FOR", val_peek(0).nodo, generador_codigo_intermedio.generarNodo("=", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoExpresion("+", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoConstante(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2), analizador_semantico.obtenerTipoElemento(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2))))))));}
 break;
 case 188:
 //#line 394 "Gramatica.y"
@@ -1902,7 +1903,7 @@ case 204:
 //#line 416 "Gramatica.y"
 {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); yyval.sval = null; yyval.nodo = null;}
 break;
-//#line 1827 "Parser.java"
+//#line 1828 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####
@@ -1985,6 +1986,8 @@ public Parser(boolean debugMe)
 
 }
 //################### END OF CLASS ##############################
+
+
 
 
 

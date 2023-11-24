@@ -3,13 +3,14 @@ package Assembler;
 import analizadorSintactico.analizadorLexico.AnalizadorLexico;
 import analizadorSintactico.analizadorLexico.AtributosSimbolo;
 import analizadorSintactico.generadorCodigoIntermedio.Nodo;
+import analizadorSintactico.generadorCodigoIntermedio.ParVariableAtributo;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
 public class GeneradorAssembler {
     private boolean tiene_else = false;
-    private boolean es_for = false;
     private boolean es_condicion_for = false;
     private int contador_print = 0;
     private String ultimo_signo_comparacion;
@@ -20,6 +21,25 @@ public class GeneradorAssembler {
 
     private String encabezado;
 
+    public GeneradorAssembler() {}
+
+    public void recorrer_y_Reemplazar(Nodo nodo){
+        if (nodo != null){
+        	if (nodo.getSimbolo().equals("FOR"))
+        		es_condicion_for = true;
+            recorrer_y_Reemplazar(nodo.getNodoHijoIzquierdo());
+            if (nodo.getSimbolo().equals("CUERPO_IF") && nodo.getNodoHijoDerecho() != null) {
+            	tiene_else = true;
+            	generar_Codigo(nodo);
+            }
+            recorrer_y_Reemplazar(nodo.getNodoHijoDerecho());
+            recorrer_y_Reemplazar(nodo.getNodoHijoUnidireccional());
+            if (nodo.getSimbolo().equals("PRINT") || nodo.getSimbolo().equals("ELSE") || nodo.getSimbolo().equals("CUERPO_FOR") || nodo.getSimbolo().equals("RETURN") || (nodo.getNodoHijoIzquierdo() != null || nodo.getNodoHijoDerecho() != null || nodo.getNodoHijoUnidireccional() != null)) //ya que para la sentencia ejecutable del PRINT y para los nodos de control THEN, ELSE y CUERPO_FOR hay que efectuar ciertas acciones mas alla de que sus hijos sean todos null 
+                nodo = generar_Codigo(nodo);
+            else if (nodo.getSimbolo().equals("BLOQUE") || nodo.getSimbolo().equals("IF") || nodo.getSimbolo().equals("FOR") || nodo.getSimbolo().equals("CUERPO_IF") || nodo.getSimbolo().equals("CUERPO_FOR") || nodo.getSimbolo().equals("BUCLE") || nodo.getSimbolo().equals("CONDICION") || nodo.getSimbolo().equals("CONDICION_FOR"))
+            	nodo = null;
+        }
+    }
 
     public void recorrer_y_Generar_Codigo(Nodo nodo){
         //
@@ -77,7 +97,7 @@ public class GeneradorAssembler {
         switch(padre_subarbol.getSimbolo()){
             case "=":
                  asignacion(padre_subarbol);
-                return null;
+                 return null;
             case "+":
                 String tipo = padre_subarbol.getTipo();
                 if (tipo.equals("DOUBLE")) {
@@ -166,12 +186,15 @@ public class GeneradorAssembler {
                 codigoFinal.add(codigo);
                 return null;
             case "CALL": //LLAMADO FUNCIONES
-                // tal vez deberia copiar las variables aca de ida  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                String codigo22 = "CALL " + padre_subarbol.getSimbolo();
+                String codigo22 = "CALL " + padre_subarbol.getNodoHijoIzquierdo().getSimbolo();
+                ArrayList<ParVariableAtributo> pares_variable_atributo = padre_subarbol.getParesVariableAtributo();
+                for (ParVariableAtributo par:pares_variable_atributo)
+                	intercambiar_Valor_Atributo(par.getVariable(), par.getAtributo()); //si se trata de una invocacion a un metodo de clase, se copia el valor de la variable de la instancia en el atributo de la clase correspondiente (ida)
                 codigoFinal.add(codigo22);
-                // tal vez deberia copiar las variables aca de vuelta !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                for (ParVariableAtributo par:pares_variable_atributo)
+                	intercambiar_Valor_Atributo(par.getAtributo(), par.getVariable()); //si se trata de una invocacion a un metodo de clase, se copia el valor del atributo de la clase en la variable de la instancia correspondiente (vuelta)
                 return null;
-            case "THEN":
+            case "CUERPO_IF":
                 then_if_();
                 return null;
             case "ELSE":
@@ -180,10 +203,31 @@ public class GeneradorAssembler {
             case "CUERPO_FOR":
                 fin_For();
                 return null;
+            case "RETURN":
+            	codigoFinal.add("ret");
+            	return null;
             default: //Comparaciones
                     comparacion(padre_subarbol);
                     return null;
         }
+    }
+    
+    private void intercambiar_Valor_Atributo(String variable1, String variable2) {
+    	String tipo_variables = AnalizadorLexico.simbolos.get(variable1).getTipo();
+    	String codigo = "";
+    	if (tipo_variables.equals("INT")) {
+    		codigo = "MOV AX," + variable1 + "\n"
+    		+ "MOV " + variable2 + ",AX";
+    	}
+    	else if (tipo_variables.equals("ULONG")) {
+    		codigo = "MOV EAX," + variable1 + "\n"
+    	    		+ "MOV " + variable2 + ",AX";
+    	}
+    	else if (tipo_variables.equals("DOUBLE")) {
+    		codigo = "FLD " + variable1 + "\n"
+    		+ "FST " + variable2;
+    	}
+    	codigoFinal.add(codigo);
     }
 
     private String suma_Pto_Flotante(Nodo nodo){
@@ -606,12 +650,13 @@ public class GeneradorAssembler {
 
     private String comparacion(Nodo nodo){
         String codigo;
-        if (es_for && es_condicion_for) {
+        if (es_condicion_for) {
             codigo = "label" + contador_Label + ";";
             codigoFinal.add(codigo);
             pila.add(codigo);
             contador_Label++;
-            }
+            es_condicion_for = false;
+        }
         ultimo_signo_comparacion = nodo.getSimbolo();
         if (nodo.getNodoHijoIzquierdo().getValorConstante() == null && nodo.getNodoHijoDerecho().getValorConstante() == null) {
             if (nodo.getTipo().equals("INT")) {
@@ -734,7 +779,7 @@ public class GeneradorAssembler {
 
     private void then_if_(){
         String codigo;
-        if(tiene_else) {
+        if(!tiene_else) {
             codigo = pila.get(pila.size() - 1);
             codigoFinal.add(codigo);
             pila.remove(pila.size() - 1);
@@ -745,6 +790,7 @@ public class GeneradorAssembler {
             codigo = pila.get(pila.size() - 2);
             codigoFinal.add(codigo);
             pila.remove(pila.size() - 2);
+            tiene_else = false;
         }
     }
 
