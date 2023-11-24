@@ -14,8 +14,8 @@ public class Generador_Token {
         pares_token_regex.add(new Par_Token_Regex(-1,"^[+\\-*/]$")); //Operadores arimeticos simples, este token no se usa realmente, sino que se devuelve el correspondiente al valor ASCII del caracter
         pares_token_regex.add(new Par_Token_Regex(-1,"^=$")); //Operador de asignacion, este token no se usa realmente, sino que se devuelve el correspondiente al valor ASCII del caracter
         pares_token_regex.add(new Par_Token_Regex(-1,"^>$")); //Comparador de mayor, este token no se usa realmente, sino que se devuelve el correspondiente al valor ASCII del caracter
-        pares_token_regex.add(new Par_Token_Regex(-1,"^<$"));; //Comparador de menor, este token no se usa realmente, sino que se devuelve el correspondiente al valor ASCII del caracter
-        pares_token_regex.add(new Par_Token_Regex(-2,"^[A-Z]+(_[A-Z]+)?$")); //Palabras reservadas, este token no se usa realmente, sino que se busca el especifo en la tabla de palabras reservadas
+        pares_token_regex.add(new Par_Token_Regex(-1,"^<$")); //Comparador de menor, este token no se usa realmente, sino que se devuelve el correspondiente al valor ASCII del caracter
+        pares_token_regex.add(new Par_Token_Regex(-2,"^[A-Z]+(_[A-Z]+)?$")); //Palabras reservadas, este token no se usa realmente, sino que se busca el especifico en la tabla de palabras reservadas
         palabras_reservadas.put("IF", 257);
 		palabras_reservadas.put("ELSE", 258);
 		palabras_reservadas.put("END_IF", 259);
