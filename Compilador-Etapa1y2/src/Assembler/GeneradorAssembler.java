@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class GeneradorAssembler {
-    private boolean tiene_else = false;
+    private ArrayList<Boolean> tiene_else = new ArrayList<>();
     private boolean es_condicion_for = false;
     private int contador_print = 0;
     private String ultimo_signo_comparacion;
@@ -18,31 +18,44 @@ public class GeneradorAssembler {
     private ArrayList<String> pila = new ArrayList<>(); //Utilizado para apilar los label de las sentencias de control
     private int contador_Variable_Auxiliar = 1; // Utilizado para que no haya variables auxiliares con el mismo nombre
     private ArrayList<String> codigoFinal = new ArrayList<>();
+    private ArrayList<String> codigoFinalFunciones = new ArrayList<>();
 
     private String encabezado;
 
     public GeneradorAssembler() {}
 
-    public void recorrer_y_Reemplazar(Nodo nodo){
+    public Nodo recorrer_y_Reemplazar(Nodo nodo){
         if (nodo != null){
         	if (nodo.getSimbolo().equals("FOR"))
         		es_condicion_for = true;
-            recorrer_y_Reemplazar(nodo.getNodoHijoIzquierdo());
-            if (nodo.getSimbolo().equals("CUERPO_IF") && nodo.getNodoHijoDerecho() != null) {
-            	tiene_else = true;
-            	generar_Codigo(nodo);
-            }
-            recorrer_y_Reemplazar(nodo.getNodoHijoDerecho());
-            recorrer_y_Reemplazar(nodo.getNodoHijoUnidireccional());
-            if (nodo.getSimbolo().equals("PRINT") || nodo.getSimbolo().equals("ELSE") || nodo.getSimbolo().equals("CUERPO_FOR") || nodo.getSimbolo().equals("RETURN") || (nodo.getNodoHijoIzquierdo() != null || nodo.getNodoHijoDerecho() != null || nodo.getNodoHijoUnidireccional() != null)) //ya que para la sentencia ejecutable del PRINT y para los nodos de control THEN, ELSE y CUERPO_FOR hay que efectuar ciertas acciones mas alla de que sus hijos sean todos null 
-                nodo = generar_Codigo(nodo);
-            else if (nodo.getSimbolo().equals("BLOQUE") || nodo.getSimbolo().equals("IF") || nodo.getSimbolo().equals("FOR") || nodo.getSimbolo().equals("CUERPO_IF") || nodo.getSimbolo().equals("CUERPO_FOR") || nodo.getSimbolo().equals("BUCLE") || nodo.getSimbolo().equals("CONDICION") || nodo.getSimbolo().equals("CONDICION_FOR"))
-            	nodo = null;
+            else if (nodo.getSimbolo().equals("CUERPO_IF") && nodo.getNodoHijoDerecho() != null)
+            	tiene_else.add(true);
+            else if (nodo.getSimbolo().equals("CUERPO_IF"))
+                tiene_else.add(false);
+            nodo.setNodoHijoIzquierdo(recorrer_y_Reemplazar(nodo.getNodoHijoIzquierdo()));;
+            nodo.setNodoHijoDerecho(recorrer_y_Reemplazar(nodo.getNodoHijoDerecho()));
+            nodo.setNodoHijoUnidireccional(recorrer_y_Reemplazar(nodo.getNodoHijoUnidireccional()));
+            System.out.println(nodo.getSimbolo());
+            if (nodo.getSimbolo().equals("PRINT") || nodo.getSimbolo().equals("ELSE") || nodo.getSimbolo().equals("CUERPO_FOR") || nodo.getSimbolo().equals("RETURN") || nodo.getSimbolo().equals("THEN") || nodo.getSimbolo().equals("PARAMETRO_REAL") || (nodo.getNodoHijoIzquierdo() != null || nodo.getNodoHijoDerecho() != null || nodo.getNodoHijoUnidireccional() != null)){
+                return generar_Codigo(nodo);
+            } //ya que para la sentencia ejecutable del PRINT y para los nodos de control THEN, ELSE y CUERPO_FOR hay que efectuar ciertas acciones mas alla de que sus hijos sean todos null   
+            else if (nodo.getSimbolo().equals("BLOQUE") || nodo.getSimbolo().equals("IF") || nodo.getSimbolo().equals("FOR") || nodo.getSimbolo().equals("CUERPO_IF") || nodo.getSimbolo().equals("BUCLE") || nodo.getSimbolo().equals("CONDICION") || nodo.getSimbolo().equals("CONDICION_FOR") || nodo.getSimbolo().equals("CUERPO_FUNCION") || nodo.getSimbolo().equals("PROGRAMA") || nodo.getSimbolo().equals("PROGRAMA_VACIO") || nodo.getSimbolo().equals("PARAMETRO_FORMAL"))
+            	return null;
+            return nodo; //este es el caso de que sea una constante o un identificador, que no tienen que eliminase aun sus nodos (ya que deben ser usados por el padre, por ejemplo una expresion aritmetica)
         }
+        return null;
     }
 
-    public void recorrer_y_Generar_Codigo(Nodo nodo){
-        //
+    public void recorrer_y_Generar_Codigo(Nodo nodo,ArrayList<Nodo> funciones){
+        for(Nodo nodo_funcion : funciones){
+                    codigoFinal.add(nodo_funcion.getSimbolo()+":");
+                    recorrer_y_Reemplazar(nodo_funcion);
+        }
+        for(String codigo : codigoFinal){
+            codigoFinalFunciones.add(codigo);
+        }
+        codigoFinal.clear();
+        recorrer_y_Reemplazar(nodo);
         try (FileWriter archivo = new FileWriter("./codigo_Assembler.asm")) {
             //AGREGAR A TABLA DE SIMBOLOS LOS 3 MESSAGEBOX CON EL MENSAJE DE ERROR CORRESPONDIENTE (OVERFLOW ENTEROS,OVERFLOW PRODUCTO DOUBLE, RESULTADO NEGATIVO RESTA ULONG)
             encabezado = ".386\n" +
@@ -75,7 +88,9 @@ public class GeneradorAssembler {
                 }
             }
             archivo.write(".code" + System.lineSeparator());
-            //RECORRIDO ARBOL DE FUNCIONES
+                     for (String linea : codigoFinalFunciones) {
+                        archivo.write(linea + System.lineSeparator());
+                    }
             archivo.write("start:" + System.lineSeparator());
             for (String linea : codigoFinal) {
                 archivo.write(linea + System.lineSeparator());
@@ -102,80 +117,92 @@ public class GeneradorAssembler {
                 String tipo = padre_subarbol.getTipo();
                 if (tipo.equals("DOUBLE")) {
                     resultado = suma_Pto_Flotante(padre_subarbol);
-                    Nodo resultado2 = new Nodo(null, null, null, resultado);
+                    Nodo resultado2 = new Nodo(null, null, null, resultado,"DOUBLE");
                     contador_Variable_Auxiliar++;
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("DOUBLE"));
                     return resultado2;
                 }
                 else if ((tipo.equals("ULONG"))) {
                     resultado = suma_Enteros_Ulong(padre_subarbol);
-                    Nodo resultado3 = new Nodo(null, null, null, resultado);
+                    Nodo resultado3 = new Nodo(null, null, null, resultado,"ULONG");
                     contador_Variable_Auxiliar++;
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("ULONG"));
                     return resultado3;
                 }
                 else {
                     resultado = suma_Enteros_Int(padre_subarbol);
-                    Nodo resultado4 = new Nodo(null, null, null, resultado);
+                    Nodo resultado4 = new Nodo(null, null, null, resultado,"INT");
                     contador_Variable_Auxiliar++;
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("INT"));
                     return resultado4;
                 }
             case "-":
                 String tipo1= padre_subarbol.getTipo();
                 if (tipo1.equals("DOUBLE")) {
                     resultado = resta_Pto_Flotante(padre_subarbol);
-                    Nodo resultado5 = new Nodo(null, null, null, resultado);
+                    Nodo resultado5 = new Nodo(null, null, null, resultado,"DOUBLE");
                     contador_Variable_Auxiliar++;
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("DOUBLE"));
                     return resultado5;
                 }
                 else if ((tipo1.equals("ULONG"))) {
                     resultado = resta_Enteros_Ulong(padre_subarbol);
-                    Nodo resultado6 = new Nodo(null, null, null, resultado);
+                    Nodo resultado6 = new Nodo(null, null, null, resultado,"ULONG");
                     contador_Variable_Auxiliar++;
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("ULONG"));
                     return resultado6;
                 }
                 else {
                     resultado = resta_Enteros_INT(padre_subarbol);
-                    Nodo resultado7 = new Nodo(null, null, null, resultado);
+                    Nodo resultado7 = new Nodo(null, null, null, resultado,"INT");
                     contador_Variable_Auxiliar++;
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("INT"));
                     return resultado7;
                 }
             case "*":
                 String tipo3 = padre_subarbol.getTipo();
                 if (tipo3.equals("DOUBLE")) {
                     resultado = multiplicacion_Pto_Flotante(padre_subarbol);
-                    Nodo resultado8 = new Nodo(null, null, null, resultado);
+                    Nodo resultado8 = new Nodo(null, null, null, resultado,"DOUBLE");
                     contador_Variable_Auxiliar++;
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("DOUBLE"));
                     return resultado8;
                 }
                 else if ((tipo3.equals("ULONG"))) {
                     resultado = multiplicacion_Enteros_Ulong(padre_subarbol);
-                    Nodo resultado9 = new Nodo(null, null, null, resultado);
+                    Nodo resultado9 = new Nodo(null, null, null, resultado,"ULONG");
                     contador_Variable_Auxiliar++;
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("ULONG"));
                     return resultado9;
                 }
                 else {
                     resultado = multiplicacion_Enteros_Int(padre_subarbol);
-                    Nodo resultado10 = new Nodo(null, null, null, resultado);
+                    Nodo resultado10 = new Nodo(null, null, null, resultado,"INT");
                     contador_Variable_Auxiliar++;
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("INT"));
                     return resultado10;
                 }
             case "/":
                 String tipo4 = padre_subarbol.getTipo();
                 if (tipo4.equals("DOUBLE")) {
                     resultado = division_Pto_Flotante(padre_subarbol);
-                    Nodo resultado11 = new Nodo(null, null, null, resultado);
+                    Nodo resultado11 = new Nodo(null, null, null, resultado,"DOUBLE");
                     contador_Variable_Auxiliar++;
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("DOUBLE"));
                     return resultado11;
                 }
                 else if ((tipo4.equals("ULONG"))) {
                     resultado = division_Enteros_Ulong(padre_subarbol);
-                    Nodo resultado12 = new Nodo(null, null, null, resultado);
+                    Nodo resultado12 = new Nodo(null, null, null, resultado,"ULONG");
                     contador_Variable_Auxiliar++;
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("ULONG"));
                     return resultado12;
                 }
                 else {
                     resultado = division_Enteros_Int(padre_subarbol);
-                    Nodo resultado13 = new Nodo(null, null, null, resultado);
+                    Nodo resultado13 = new Nodo(null, null, null, resultado,"INT");
                     contador_Variable_Auxiliar++;
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("INT"));
                     return resultado13;
                 }
             case "PRINT":
@@ -186,22 +213,32 @@ public class GeneradorAssembler {
                 codigoFinal.add(codigo);
                 return null;
             case "CALL": //LLAMADO FUNCIONES
-                String codigo22 = "CALL " + padre_subarbol.getNodoHijoIzquierdo().getSimbolo();
                 ArrayList<ParVariableAtributo> pares_variable_atributo = padre_subarbol.getParesVariableAtributo();
                 for (ParVariableAtributo par:pares_variable_atributo)
-                	intercambiar_Valor_Atributo(par.getVariable(), par.getAtributo()); //si se trata de una invocacion a un metodo de clase, se copia el valor de la variable de la instancia en el atributo de la clase correspondiente (ida)
+                	intercambiar_Valor_Atributo(par.getVariable(), par.getAtributo(), AnalizadorLexico.simbolos.get((par.getAtributo())).getTipo()); //si se trata de una invocacion a un metodo de clase, se copia el valor de la variable de la instancia en el atributo de la clase correspondiente (ida)
+                String codigo22 = "CALL " + padre_subarbol.getNodoHijoIzquierdo().getSimbolo();
                 codigoFinal.add(codigo22);
                 for (ParVariableAtributo par:pares_variable_atributo)
-                	intercambiar_Valor_Atributo(par.getAtributo(), par.getVariable()); //si se trata de una invocacion a un metodo de clase, se copia el valor del atributo de la clase en la variable de la instancia correspondiente (vuelta)
+                	intercambiar_Valor_Atributo(par.getAtributo(), par.getVariable(), AnalizadorLexico.simbolos.get((par.getAtributo())).getTipo()); //si se trata de una invocacion a un metodo de clase, se copia el valor del atributo de la clase en la variable de la instancia correspondiente (vuelta)
                 return null;
-            case "CUERPO_IF":
+            case "PARAMETRO_REAL":
+            	if (padre_subarbol.getParametroFormalAsociado() != null && padre_subarbol.getNodoHijoUnidireccional() != null) {
+                    if (padre_subarbol.getNodoHijoUnidireccional().getValorConstante() == null)
+                        intercambiar_Valor_Atributo(padre_subarbol.getNodoHijoUnidireccional().getSimbolo(), padre_subarbol.getParametroFormalAsociado(), AnalizadorLexico.simbolos.get(padre_subarbol.getParametroFormalAsociado()).getTipo());
+                    else
+                        intercambiar_Valor_Atributo(padre_subarbol.getNodoHijoUnidireccional().getValorConstante(), padre_subarbol.getParametroFormalAsociado(), AnalizadorLexico.simbolos.get(padre_subarbol.getParametroFormalAsociado()).getTipo());
+                }
+            	return null;
+            case "THEN":
                 then_if_();
                 return null;
             case "ELSE":
                 else_if_();
-                return null;
+                return null; 
             case "CUERPO_FOR":
                 fin_For();
+                return null;
+            case "PARAMETRO_FORMAL":
                 return null;
             case "RETURN":
             	codigoFinal.add("ret");
@@ -212,8 +249,7 @@ public class GeneradorAssembler {
         }
     }
     
-    private void intercambiar_Valor_Atributo(String variable1, String variable2) {
-    	String tipo_variables = AnalizadorLexico.simbolos.get(variable1).getTipo();
+    private void intercambiar_Valor_Atributo(String variable1, String variable2, String tipo_variables) {
     	String codigo = "";
     	if (tipo_variables.equals("INT")) {
     		codigo = "MOV AX," + variable1 + "\n"
@@ -238,7 +274,15 @@ public class GeneradorAssembler {
                     + "FSTP @aux" + contador_Variable_Auxiliar;
             codigoFinal.add(codigo);
         }
-        else if (nodo.getNodoHijoIzquierdo().getValorConstante() != null)
+        else if (nodo.getNodoHijoIzquierdo().getValorConstante() == null)
+        {
+            String codigo4 = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
+                    + "FLD " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "FADD \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigoFinal.add(codigo4);
+        }
+        else if(nodo.getNodoHijoDerecho().getValorConstante() == null)
         {
             String codigo4 = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                     + "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
@@ -248,7 +292,7 @@ public class GeneradorAssembler {
         }
         else
         {
-            String codigo4 = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
+            String codigo4 = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                     + "FLD " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "FADD \n"
                     + "FSTP @aux" + contador_Variable_Auxiliar;
@@ -271,7 +315,14 @@ public class GeneradorAssembler {
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX"; //EL JO ES PARA CONTROLAR EL OVERFLOW
             codigoFinal.add(codigo);
         }
-        else{
+        else if(nodo.getNodoHijoDerecho().getValorConstante() != null) {
+            String codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
+                    + "ADD AX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "JO error_overflow_suma_int \n" //CONTROL OVERFLOW
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX"; //EL JO ES PARA CONTROLAR EL OVERFLOW
+            codigoFinal.add(codigo);
+        }
+        else {
             String codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
                     + "ADD AX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "JO error_overflow_suma_int \n" //CONTROL OVERFLOW
@@ -280,6 +331,7 @@ public class GeneradorAssembler {
         }
         return "@aux"+contador_Variable_Auxiliar;
     }
+    
     private String suma_Enteros_Ulong(Nodo nodo){
         if (nodo.getNodoHijoIzquierdo().getValorConstante() == null && nodo.getNodoHijoDerecho().getValorConstante() == null) {
             String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
@@ -293,8 +345,14 @@ public class GeneradorAssembler {
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
             codigoFinal.add(codigo);
         }
-        else{
+        else if (nodo.getNodoHijoDerecho().getValorConstante() != null){
             String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
+                    + "ADD EAX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo);
+        }
+        else {
+            String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                     + "ADD EAX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
             codigoFinal.add(codigo);
@@ -315,9 +373,15 @@ public class GeneradorAssembler {
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
             codigoFinal.add(codigo1);
         }
-        else
+        else if(nodo.getNodoHijoDerecho().getValorConstante() != null)
         {
             String codigo1 = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
+                    + "IMUL AX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigoFinal.add(codigo1);
+        }
+        else{
+            String codigo1 = "MOV AX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                     + "IMUL AX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
             codigoFinal.add(codigo1);
@@ -338,8 +402,14 @@ public class GeneradorAssembler {
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
             codigoFinal.add(codigo1);
         }
-        else {
+        else if(nodo.getNodoHijoDerecho().getValorConstante() != null) {
             String codigo1 = "MOV EAX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
+                    + "MUL EAX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo1);
+        }
+        else {
+            String codigo1 = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                     + "MUL EAX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
             codigoFinal.add(codigo1);
@@ -367,7 +437,7 @@ public class GeneradorAssembler {
                     + "SAHF\n"
                     + "JO error_overflow_multiplicacion_double:\n";
         }
-        else {
+        else if(nodo.getNodoHijoDerecho().getValorConstante() != null) {
              codigo = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
                     + "FLD " + nodo.getNodoHijoDerecho().getValorConstante()+ "\n"
                     + "FMUL \n"
@@ -376,7 +446,17 @@ public class GeneradorAssembler {
                     + "SAHF\n"
                     + "JO error_overflow_multiplicacion_double:\n";
         }
-        // agrego la variable auxiliara la tabla de simbolos
+        else {
+             codigo = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
+                    + "FLD " + nodo.getNodoHijoDerecho().getValorConstante()+ "\n"
+                    + "FMUL \n"
+                    + "FSTSW @aux" + contador_Variable_Auxiliar + "\n"
+                    + "MOV AX , " + "@aux" + contador_Variable_Auxiliar + "\n"
+                    + "SAHF\n"
+                    + "JO error_overflow_multiplicacion_double:\n";
+        }
+        // agrego la variable auxiliar a la tabla de simbolos
+        AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE"));
         contador_Variable_Auxiliar++;
         codigoFinal.add(codigo);
         codigo = "FSTP @aux" + contador_Variable_Auxiliar;
@@ -399,8 +479,15 @@ public class GeneradorAssembler {
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
             codigoFinal.add(codigo1);
         }
-        else{
+        else if(nodo.getNodoHijoDerecho().getValorConstante() != null){
             String codigo1 = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
+                    + "CWD \n"
+                    + "IDIV " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigoFinal.add(codigo1);
+        }
+        else{
+             String codigo1 = "MOV AX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                     + "CWD \n"
                     + "IDIV " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
@@ -423,11 +510,18 @@ public class GeneradorAssembler {
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
             codigoFinal.add(codigo1);
         }
-        else{
+        else if(nodo.getNodoHijoDerecho().getValorConstante() != null){
             String codigo1 = "MOV EAX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
                     + "MOV EDX,0 \n"
                     + "DIV " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo1);
+        }
+        else{
+             String codigo1 = "MOV AX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
+                    + "CWD \n"
+                    + "IDIV " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
             codigoFinal.add(codigo1);
         }
         return "@aux"+contador_Variable_Auxiliar;
@@ -447,8 +541,15 @@ public class GeneradorAssembler {
                     + "FSTP @aux" + contador_Variable_Auxiliar;
             codigoFinal.add(codigo);
         }
-        else{
+        else if(nodo.getNodoHijoDerecho().getValorConstante() != null){
             String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
+                    + "FLD " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "FDIV \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigoFinal.add(codigo);
+        }
+        else {
+             String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                     + "FLD " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "FDIV \n"
                     + "FSTP @aux" + contador_Variable_Auxiliar;
@@ -465,15 +566,22 @@ public class GeneradorAssembler {
             codigoFinal.add(codigo);
         }
         else if(nodo.getNodoHijoIzquierdo().getValorConstante() != null){
-            String codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
+            String codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                     + "SUB AX ," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
             codigoFinal.add(codigo);
         }
-        else{
+        else if(nodo.getNodoHijoDerecho().getValorConstante() != null){
             String codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "SUB AX ," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "SUB AX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigoFinal.add(codigo);
+        }
+        else{
+             String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
+                    + "FLD " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "FDIV \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
             codigoFinal.add(codigo);
         }
         return "@aux"+contador_Variable_Auxiliar;
@@ -493,8 +601,15 @@ public class GeneradorAssembler {
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
             codigoFinal.add(codigo);
         }
-        else{
+        else if(nodo.getNodoHijoDerecho().getValorConstante() != null){
             String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
+                    + "SUB EAX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "JS error_rdo_negativo_resta_ulong \n" //CONTROLA QUE NO HAYA DADO NEGATIVO
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigoFinal.add(codigo);
+        }
+        else {
+             String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                     + "SUB EAX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "JS error_rdo_negativo_resta_ulong \n" //CONTROLA QUE NO HAYA DADO NEGATIVO
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
@@ -512,17 +627,24 @@ public class GeneradorAssembler {
             codigoFinal.add(codigo);
         }
         else if(nodo.getNodoHijoIzquierdo().getValorConstante() != null){
-            String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
+            String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                     + "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "FSUB \n"
                     + "FSTP @aux" + contador_Variable_Auxiliar;
             codigoFinal.add(codigo);
         }
-        else{
+        else if(nodo.getNodoHijoDerecho().getValorConstante() != null){
             String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "FLD " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "FSUB \n"
                     + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigoFinal.add(codigo);
+        }
+        else{
+             String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
+                    + "SUB EAX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "JS error_rdo_negativo_resta_ulong \n" //CONTROLA QUE NO HAYA DADO NEGATIVO
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
             codigoFinal.add(codigo);
         }
         return "@aux" + contador_Variable_Auxiliar;
@@ -625,24 +747,25 @@ public class GeneradorAssembler {
 
     private String asignacion(Nodo nodo){
         String codigo;
-        if(!(nodo.getNodoHijoDerecho().getSimbolo().contains("@")) | !(Character.isLetter(nodo.getNodoHijoDerecho().getNodoHijoDerecho().getSimbolo().charAt(0))) | (nodo.getNodoHijoDerecho().getSimbolo().startsWith("_"))) { //chequea que sea una constante
+        if(nodo.getNodoHijoDerecho().getValorConstante() == null) { //chequea que no sea una constante
             if (nodo.getNodoHijoDerecho().getTipo().equals("INT")) {
-                codigo = "MOV AX," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                codigo = "MOV AX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                         + "MOV " + nodo.getNodoHijoIzquierdo().getSimbolo() + ",AX";
                 codigoFinal.add(codigo);
             }
             else if (nodo.getNodoHijoDerecho().getTipo().equals("ULONG")) {
-                codigo = "MOV EAX," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                codigo = "MOV EAX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                         + "MOV " + nodo.getNodoHijoIzquierdo().getSimbolo() + ",EAX";
                 codigoFinal.add(codigo);
             }
             else {
-                codigo = "MOV " + nodo.getNodoHijoIzquierdo().getSimbolo() + "," + nodo.getNodoHijoDerecho().getValorConstante();
+                codigo ="FLD " + nodo.getNodoHijoDerecho().getSimbolo()
+                    +"FST " + nodo.getNodoHijoIzquierdo().getSimbolo();
                 codigoFinal.add(codigo);
             }
         }
         else {
-            codigo = "MOV " + nodo.getNodoHijoIzquierdo().getSimbolo() + "," + nodo.getNodoHijoDerecho().getSimbolo();
+            codigo = "MOV " + nodo.getNodoHijoIzquierdo().getSimbolo() + "," + nodo.getNodoHijoDerecho().getValorConstante();
             codigoFinal.add(codigo);
         }
         return "";
@@ -651,7 +774,7 @@ public class GeneradorAssembler {
     private String comparacion(Nodo nodo){
         String codigo;
         if (es_condicion_for) {
-            codigo = "label" + contador_Label + ";";
+            codigo = "label" + contador_Label + ":";
             codigoFinal.add(codigo);
             pila.add(codigo);
             contador_Label++;
@@ -676,7 +799,7 @@ public class GeneradorAssembler {
                         + "MOV AX,@aux" + contador_Variable_Auxiliar + "\n"
                         + "SAHF";
                 codigoFinal.add(codigo);
-                //ACA SE TIENE QUE GUARDAR VARIABLE AUXILIAR EN TABLA DE SIMBOLOS.
+                AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE"));
                 contador_Variable_Auxiliar++;
                 condicion_Sentencia_Control_Sin_Signo();
             }
@@ -699,12 +822,12 @@ public class GeneradorAssembler {
                         + "MOV AX,@aux" + contador_Variable_Auxiliar + "\n"
                         + "SAHF";
                 codigoFinal.add(codigo);
-                //ACA SE TIENE QUE GUARDAR VARIABLE AUXILIAR EN TABLA DE SIMBOLOS.
+                AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE"));
                 contador_Variable_Auxiliar++;
                 condicion_Sentencia_Control_Sin_Signo();
             }
         }
-        else{
+        else if(nodo.getNodoHijoDerecho().getValorConstante() != null) {
             if (nodo.getTipo().equals("INT")) {
                 codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
                         + "CMP AX," + nodo.getNodoHijoDerecho().getValorConstante();
@@ -722,11 +845,35 @@ public class GeneradorAssembler {
                         + "MOV AX,@aux" + contador_Variable_Auxiliar + "\n"
                         + "SAHF";
                 codigoFinal.add(codigo);
-                //ACA SE TIENE QUE GUARDAR VARIABLE AUXILIAR EN TABLA DE SIMBOLOS.
+                AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE"));
                 contador_Variable_Auxiliar++;
                 condicion_Sentencia_Control_Sin_Signo();
             }
         }
+        else {
+              if (nodo.getTipo().equals("INT")) {
+                codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
+                        + "CMP AX," + nodo.getNodoHijoDerecho().getValorConstante();
+                codigoFinal.add(codigo);
+                condicion_Sentencia_Control_Signado();
+            } else if (nodo.getTipo().equals("ULONG")) {
+                codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
+                        + "CMP EAX," + nodo.getNodoHijoDerecho().getValorConstante();
+                codigoFinal.add(codigo);
+                condicion_Sentencia_Control_Sin_Signo();
+            } else {
+                codigo = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
+                        + "FCOM" + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                        + "FSTSW @aux" + contador_Variable_Auxiliar + "\n" ///preguntar si el label del for deberia estar en la linea de abajo
+                        + "MOV AX,@aux" + contador_Variable_Auxiliar + "\n"
+                        + "SAHF";
+                codigoFinal.add(codigo);
+                AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE"));
+                contador_Variable_Auxiliar++;
+                condicion_Sentencia_Control_Sin_Signo();
+            }
+        }
+        
         return "";
     }
 
@@ -744,11 +891,11 @@ public class GeneradorAssembler {
             case ">=":
                 salto_Menor_Aritmetico_Signado(contador_Label);
                 break;
-            case "==":
-                salto_Distinto_Aritmetico_Signado(contador_Label);
-                break;
             case "!!":
                 salto_Igual_Aritmetico_Signado(contador_Label);
+                break;
+            case "==":
+                salto_Distinto_Aritmetico_Signado(contador_Label);
         }
         return "";
     }
@@ -779,7 +926,8 @@ public class GeneradorAssembler {
 
     private void then_if_(){
         String codigo;
-        if(!tiene_else) {
+        int cantidad_else_conectados = tiene_else.size();
+        if(cantidad_else_conectados == 0 || !tiene_else.get(cantidad_else_conectados-1)) {
             codigo = pila.get(pila.size() - 1);
             codigoFinal.add(codigo);
             pila.remove(pila.size() - 1);
@@ -790,8 +938,8 @@ public class GeneradorAssembler {
             codigo = pila.get(pila.size() - 2);
             codigoFinal.add(codigo);
             pila.remove(pila.size() - 2);
-            tiene_else = false;
         }
+        tiene_else.remove(cantidad_else_conectados-1);
     }
 
     private void else_if_(){

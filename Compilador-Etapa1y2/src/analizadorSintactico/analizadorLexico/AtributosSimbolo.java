@@ -40,6 +40,10 @@ public class AtributosSimbolo {
 		this.tipo = tipo;
 		this.cadena_caracteres_print = cadena_caracteres_print;
 	}
+	
+	public AtributosSimbolo(String tipo) {
+		this.tipo = tipo;
+	} 
 
 	public int getToken() {
 		return token;

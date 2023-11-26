@@ -4,6 +4,7 @@
     import analizadorSintactico.analizadorSemantico.AnalizadorSemantico;
     import analizadorSintactico.generadorCodigoIntermedio.GeneradorCodigoIntermedio;
     import analizadorSintactico.generadorCodigoIntermedio.Nodo;
+    import Assembler.GeneradorAssembler;
 %}
 
 %token IF ELSE END_IF PRINT CLASS VOID INT ULONG DOUBLE FOR IN RANGE IMPL INTERFACE IMPLEMENT RETURN CONSTANTE_PF CONSTANTE_I CONSTANTE_UL CADENA_CARACTERES ID ASIGNADOR_MENOS_IGUAL COMP_MAYOR_IGUAL COMP_MENOR_IGUAL COMP_IGUAL COMP_DISTINTO
@@ -12,17 +13,17 @@
 %%
 
 programa:	bloque_sentencias               {System.out.print("(PROGRAMA) "); analizador_semantico.actualizarAmbitoActual("-"); analizador_semantico.verificarReferenciasVariablesEnAsignaciones(); $$.nodo = generador_codigo_intermedio.generarNodoUnidireccional("PROGRAMA", $1.nodo); GeneradorCodigoIntermedio.nodo_programa = $$.nodo;}
-		    | '{' '}'                       {System.out.print("(PROGRAMA VACIO) "); $$.nodo = generador_codigo_intermedio.generarNodoUnidireccional("PROGRAMA", null); GeneradorCodigoIntermedio.nodo_programa = $$.nodo;}
+		    | '{' '}'                       {System.out.print("(PROGRAMA_VACIO) "); $$.nodo = generador_codigo_intermedio.generarNodoUnidireccional("PROGRAMA_VACIO", null); GeneradorCodigoIntermedio.nodo_programa = $$.nodo;}
             | error bloque_sentencias       {System.out.print("(PROGRAMA) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); analizador_semantico.verificarReferenciasVariablesEnAsignaciones(); $$.nodo = null;}
-            | error '{' '}'                 {System.out.print("(PROGRAMA VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); $$.nodo = null;}
-            | error '{' '}' error           {System.out.print("(PROGRAMA VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); $$.nodo = null;}      
+            | error '{' '}'                 {System.out.print("(PROGRAMA_VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); $$.nodo = null;}
+            | error '{' '}' error           {System.out.print("(PROGRAMA_VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); $$.nodo = null;}      
             | bloque_sentencias error       {System.out.print("(PROGRAMA) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); analizador_semantico.verificarReferenciasVariablesEnAsignaciones(); $$.nodo = null;}
-            | '{' '}' error                 {System.out.print("(PROGRAMA VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); $$.nodo = null;}
+            | '{' '}' error                 {System.out.print("(PROGRAMA_VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); $$.nodo = null;}
 
 ;
 
-bloque_sentencias:  '{' lista_sentencias '}'    {$$.nodo = generador_codigo_intermedio.generarNodoUnidireccional("BLOQUE", $2.nodo);}
-                    | lista_sentencias  '}'     {agregarError("ERROR: Bloque de sentencias de programa invalido, el formato correcto es: '{' lista_sentencias '}' con cada sentencia delimitada por ','"); $$.nodo = generador_codigo_intermedio.generarNodoUnidireccional("BLOQUE", $1.nodo);} 
+bloque_sentencias:  '{' lista_sentencias '}'    {$$.nodo = $2.nodo;}
+                    | lista_sentencias  '}'     {agregarError("ERROR: Bloque de sentencias de programa invalido, el formato correcto es: '{' lista_sentencias '}' con cada sentencia delimitada por ','"); $$.nodo = $1.nodo;} 
 
 ;
 
@@ -284,7 +285,7 @@ constante:	CONSTANTE_I         {verificarRango($1.sval); analizador_semantico.ch
 
 ;
 
-invocacion_funcion:	    referencia_funcion parametro_real ','       {System.out.print("(INVOCACION A FUNCION) "); analizador_semantico.chequearInvocacionFuncionValida(analizador_semantico.verificarReferenciaValida($1.sval, true), $2.sval); String funcion_invocada = analizador_semantico.obtenerFuncionInvocada($1.sval); $$.nodo = generador_codigo_intermedio.generarNodo("CALL", generador_codigo_intermedio.generarNodo(funcion_invocada, null, null), $2.nodo); if ($$.nodo != null) {$$.nodo.setParesVariableAtributo(analizador_semantico.obtenerParesMapeoInvocacion(funcion_invocada, analizador_semantico.obtenerVariablesInstanciaInvocacion())); if ($2.nodo != null && $2.nodo.getNodoHijoUnidireccional() != null) $2.nodo.getNodoHijoUnidireccional().setParametroFormalAsociado(analizador_semantico.obtenerParametroFormalFuncion(funcion_invocada));};}
+invocacion_funcion:	    referencia_funcion parametro_real ','       {System.out.print("(INVOCACION A FUNCION) "); analizador_semantico.chequearInvocacionFuncionValida(analizador_semantico.verificarReferenciaValida($1.sval, true), $2.sval); String funcion_invocada = analizador_semantico.obtenerFuncionInvocada($1.sval); $$.nodo = generador_codigo_intermedio.generarNodo("CALL", generador_codigo_intermedio.generarNodo(funcion_invocada, null, null), $2.nodo); if ($$.nodo != null) {$$.nodo.setParesVariableAtributo(analizador_semantico.obtenerParesMapeoInvocacion(funcion_invocada, analizador_semantico.obtenerVariablesInstanciaInvocacion())); if ($2.nodo != null) $2.nodo.setParametroFormalAsociado(analizador_semantico.obtenerParametroFormalFuncion(funcion_invocada));};}
 
 ;
 
@@ -422,6 +423,7 @@ control_rango_iteraciones:      '(' constante ';' constante ';' constante ')'   
 static AnalizadorLexico analizador_lexico = null;
 static AnalizadorSemantico analizador_semantico = null;
 static GeneradorCodigoIntermedio generador_codigo_intermedio = null;
+static GeneradorAssembler generador_codigo_assembler = null;
 static Parser par = null;
 static boolean error_compilacion = false;
 
@@ -480,6 +482,7 @@ public static void main (String [] args) {
             analizador_lexico = new AnalizadorLexico(args[0]);
             analizador_semantico = new AnalizadorSemantico();
             generador_codigo_intermedio = new GeneradorCodigoIntermedio();
+            generador_codigo_assembler = new GeneradorAssembler();
             par = new Parser(false);
             par.run();
             System.out.println();
@@ -497,8 +500,10 @@ public static void main (String [] args) {
                 System.out.println("        -------------------------------------");
             }
             analizador_lexico.imprimirTsYErrores();
-            if (!AnalizadorLexico.hayErrores())
+            if (!AnalizadorLexico.hayErrores()) {
                 generador_codigo_intermedio.imprimirArbol();
+                generador_codigo_assembler.recorrer_y_Generar_Codigo(GeneradorCodigoIntermedio.nodo_programa, GeneradorCodigoIntermedio.funciones);
+            }
 	}
 	else
 		System.out.println("ERROR: Parametros invalidos"); 

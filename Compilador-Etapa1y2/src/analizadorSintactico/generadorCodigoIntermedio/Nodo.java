@@ -24,13 +24,13 @@ public class Nodo {
 		this.nodo_hijo_unidireccional = nodo_hijo_unidireccional;
 	}
 	
-	public Nodo(Nodo nodo_hijo_izquierdo, Nodo nodo_hijo_derecho, Nodo nodo_hijo_unidireccional, String simbolo) {
+	public Nodo(Nodo nodo_hijo_izquierdo, Nodo nodo_hijo_derecho, Nodo nodo_hijo_unidireccional, String simbolo, String tipo) {
 		this.simbolo = simbolo;
 		this.nodo_hijo_izquierdo = nodo_hijo_izquierdo;
 		this.nodo_hijo_derecho = nodo_hijo_derecho;
 		this.nodo_hijo_unidireccional = nodo_hijo_unidireccional;
+		this.tipo = tipo;
 	}
-	
 
 	public String getSimbolo() {
 		return simbolo;
