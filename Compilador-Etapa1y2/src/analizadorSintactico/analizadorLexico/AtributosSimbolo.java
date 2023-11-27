@@ -15,6 +15,7 @@ public class AtributosSimbolo {
 	private String lexema_clase_asociada = null;
 	private ArrayList<String> lexemas_clases_heredadas = new ArrayList<String>(); //sirve para almacenar el conjunto de clases heredadas por composicion por otra clase (sirve para chequeos semanticos)
 	private String cadena_caracteres_print = null; //usado para las variables que contienen las cadenas de caracteres a imprimir en el codigo Assembler
+	private String valor_constante_double = null; //usado para guardar el valor de las variables auxiliares para trabajar con valores DOUBLE en la generacion de codigo Assembler
 	
 	public AtributosSimbolo(int token) {
 		this.token = token;
@@ -41,8 +42,15 @@ public class AtributosSimbolo {
 		this.cadena_caracteres_print = cadena_caracteres_print;
 	}
 	
-	public AtributosSimbolo(String tipo) {
+	public AtributosSimbolo(String tipo, String uso, boolean variable_auxiliar) { //el boolean no se usa, es para que no interfiera con el constructor de arriba
 		this.tipo = tipo;
+		this.uso = uso;
+	}
+	
+	public AtributosSimbolo(String tipo, String uso, boolean variable_auxiliar, String valor_constante_double) {
+		this.tipo = tipo;
+		this.uso = uso;
+		this.valor_constante_double = valor_constante_double;
 	} 
 
 	public int getToken() {
@@ -140,6 +148,14 @@ public class AtributosSimbolo {
 
 	public void setCadenaCaracteresPrint(String cadena_caracteres_print) {
 		this.cadena_caracteres_print = cadena_caracteres_print;
+	}
+	
+	public String getValorConstanteDouble() {
+		return valor_constante_double;
+	}
+
+	public void setValorConstanteDouble(String valor_constante_double) {
+		this.valor_constante_double = valor_constante_double;
 	}
 
 	public void incrementarCantidad() {

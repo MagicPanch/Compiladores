@@ -1,0 +1,8 @@
+{
+	DOUBLE x; y,
+	x = 1.79769313486231D+308,
+	y = 1.0,
+	DOUBLE z,
+	z = x * y,
+	PRINT % LLEGO HASTA ACA %,
+}

@@ -960,15 +960,11 @@ public class AnalizadorSemantico {
 	
 	private String determinarTipo(String expresion) { //devuelve el tipo de una expresion aritmetica o de un termino
 		if (expresion != null) {
-			if (expresion.contains("/")) //si la expresion aritmetica contiene el simbolo de division, y no hubo un error anterior, entonces la expresion tiene que ser de tipo DOUBLE (de lo contrario, ya tiene que haberse detectado un error anterior)
-				return "DOUBLE";
-			else {
-				String[] elementos_expresion = expresion.split(" ");
-				String lexema_primer_elemento = elementos_expresion[0];
-				AtributosSimbolo atributos_primer_elemento = AnalizadorLexico.simbolos.get(lexema_primer_elemento);
-				if (atributos_primer_elemento != null) //si no hubo error no tendria sentido que sea null
-					return atributos_primer_elemento.getTipo(); //dado que si no hay una barra de division, el tipo de la expresion indefectiblemente tiene que ser igual al del primer operando
-			}
+			String[] elementos_expresion = expresion.split(" ");
+			String lexema_primer_elemento = elementos_expresion[0];
+			AtributosSimbolo atributos_primer_elemento = AnalizadorLexico.simbolos.get(lexema_primer_elemento);
+			if (atributos_primer_elemento != null) //si no hubo error no tendria sentido que sea null
+				return atributos_primer_elemento.getTipo(); //el tipo de la expresion indefectiblemente tiene que ser igual al del primer operando
 		}
 		return null;
 	}

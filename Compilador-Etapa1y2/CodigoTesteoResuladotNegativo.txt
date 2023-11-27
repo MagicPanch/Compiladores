@@ -1,0 +1,8 @@
+{
+	ULONG x; y,
+	x = 1000_ul,
+	y = 2000_ul,
+	ULONG z,
+	z = x - y,
+	PRINT % LLEGO HASTA ACA %,
+}

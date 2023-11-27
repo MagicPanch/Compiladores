@@ -48,16 +48,23 @@ public class GeneradorAssembler {
 
     public void recorrer_y_Generar_Codigo(Nodo nodo,ArrayList<Nodo> funciones){
         for(Nodo nodo_funcion : funciones){
-                    codigoFinal.add(nodo_funcion.getSimbolo()+":");
+                    String nombre_funcion = nodo_funcion.getSimbolo().replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+                    codigoFinal.add(nombre_funcion+":");
                     recorrer_y_Reemplazar(nodo_funcion);
+                    codigoFinal.add("\n");
         }
         for(String codigo : codigoFinal){
             codigoFinalFunciones.add(codigo);
         }
         codigoFinal.clear();
         recorrer_y_Reemplazar(nodo);
+        AtributosSimbolo atributos_mensaje_error_int = new AtributosSimbolo("PRINT", "ERROR: OVERFLOW EN SUMA DE ENTEROS CON SIGNO (INT)");
+        AnalizadorLexico.simbolos.put("msj_error_overflow_suma_int", atributos_mensaje_error_int);
+        AtributosSimbolo atributos_mensaje_error_ulong = new AtributosSimbolo("PRINT", "ERROR: RESULTADO NEGATIVO EN RESTA DE DOS ENTEROS SIN SIGNO (ULONG)");
+        AnalizadorLexico.simbolos.put("msj_error_rdo_negativo_resta_ulong", atributos_mensaje_error_ulong);
+        AtributosSimbolo atributos_mensaje_error_double = new AtributosSimbolo("PRINT", "ERROR: OVERFLOW EN MULTIPLICACION DE NUMEROS DE PUNTO FLOTANTE (DOUBLE)");
+        AnalizadorLexico.simbolos.put("msj_error_overflow_multiplicacion_double", atributos_mensaje_error_double);
         try (FileWriter archivo = new FileWriter("./codigo_Assembler.asm")) {
-            //AGREGAR A TABLA DE SIMBOLOS LOS 3 MESSAGEBOX CON EL MENSAJE DE ERROR CORRESPONDIENTE (OVERFLOW ENTEROS,OVERFLOW PRODUCTO DOUBLE, RESULTADO NEGATIVO RESTA ULONG)
             encabezado = ".386\n" +
                     ".model flat, stdcall\n" +
                     "option casemap :none\n" +
@@ -74,19 +81,33 @@ public class GeneradorAssembler {
             //dq 64 bits
             //db Strings
             for(String key : AnalizadorLexico.simbolos.keySet()){
-                if (AnalizadorLexico.simbolos.get(key).getTipo() != null && AnalizadorLexico.simbolos.get(key).getTipo().equals("ULONG")){
+                if (AnalizadorLexico.simbolos.get(key).getTipo() != null && AnalizadorLexico.simbolos.get(key).getTipo().equals("ULONG") && AnalizadorLexico.simbolos.get(key).getUso() != null){
+                    key = key.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                     archivo.write(key + " dd ?"+ System.lineSeparator());
                 }
-                else if (AnalizadorLexico.simbolos.get(key).getTipo() != null && AnalizadorLexico.simbolos.get(key).getTipo().equals("DOUBLE")){
-                    archivo.write(key + " dq ?"+ System.lineSeparator());
+                else if (AnalizadorLexico.simbolos.get(key).getTipo() != null && AnalizadorLexico.simbolos.get(key).getTipo().equals("DOUBLE") && AnalizadorLexico.simbolos.get(key).getUso() != null){
+                    if (AnalizadorLexico.simbolos.get(key).getUso().equals("auxiliar_constante")) {
+                        String valor_constante_double = AnalizadorLexico.simbolos.get(key).getValorConstanteDouble();
+                        key = key.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+                        archivo.write(key + " dq " + valor_constante_double + System.lineSeparator());
+                    }
+                    else {
+                        key = key.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+                        archivo.write(key + " dq ?"+ System.lineSeparator());
+                    }
                 }
-                else if(AnalizadorLexico.simbolos.get(key).getTipo() != null && AnalizadorLexico.simbolos.get(key).getTipo().equals("INT")){
+                else if(AnalizadorLexico.simbolos.get(key).getTipo() != null && AnalizadorLexico.simbolos.get(key).getTipo().equals("INT") && AnalizadorLexico.simbolos.get(key).getUso() != null){
+                    key = key.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                     archivo.write(key + " dw ?"+ System.lineSeparator());
                 }
                 else if(AnalizadorLexico.simbolos.get(key).getTipo() != null && AnalizadorLexico.simbolos.get(key).getTipo().equals("PRINT")){
                     archivo.write(key + " db \""+ AnalizadorLexico.simbolos.get(key).getCadenaCaracteresPrint() + "\", 0"+ System.lineSeparator());
                 }
             }
+            archivo.write("limite_positivo_superior_double dq 1.7976931348623157E+308" + System.lineSeparator());
+            archivo.write("limite_positivo_inferior_double dq 2.2250738585072014E-308" + System.lineSeparator());
+            archivo.write("limite_negativo_superior_double dq -2.2250738585072014E-308" + System.lineSeparator());
+            archivo.write("limite_negativo_inferior_double dq -1.7976931348623157E+308" + System.lineSeparator());
             archivo.write(".code" + System.lineSeparator());
                      for (String linea : codigoFinalFunciones) {
                         archivo.write(linea + System.lineSeparator());
@@ -95,6 +116,7 @@ public class GeneradorAssembler {
             for (String linea : codigoFinal) {
                 archivo.write(linea + System.lineSeparator());
             }
+            archivo.write("JMP fin" + System.lineSeparator());
             //LOGICA CONTROL ERRORES
             String error_overflow_suma_int = "error_overflow_suma_int:\ninvoke MessageBox, NULL, addr msj_error_overflow_suma_int, addr msj_error_overflow_suma_int, MB_OK\nJMP fin\n";
             String error_overflow_multiplicacion_double = "error_overflow_multiplicacion_double:\ninvoke MessageBox, NULL, addr msj_error_overflow_multiplicacion_double, addr msj_error_overflow_multiplicacion_double, MB_OK\nJMP fin\n";
@@ -102,7 +124,7 @@ public class GeneradorAssembler {
             archivo.write(error_rdo_negativo_resta_ulong);
             archivo.write(error_overflow_multiplicacion_double);
             archivo.write(error_overflow_suma_int);
-            archivo.write("fin:\ninvoke ExitProcess, 0\nendstart");
+            archivo.write("fin:\ninvoke ExitProcess, 0\nend start");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -119,21 +141,21 @@ public class GeneradorAssembler {
                     resultado = suma_Pto_Flotante(padre_subarbol);
                     Nodo resultado2 = new Nodo(null, null, null, resultado,"DOUBLE");
                     contador_Variable_Auxiliar++;
-                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("DOUBLE"));
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("DOUBLE","auxiliar",true));
                     return resultado2;
                 }
                 else if ((tipo.equals("ULONG"))) {
                     resultado = suma_Enteros_Ulong(padre_subarbol);
                     Nodo resultado3 = new Nodo(null, null, null, resultado,"ULONG");
                     contador_Variable_Auxiliar++;
-                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("ULONG"));
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("ULONG","auxiliar",true));
                     return resultado3;
                 }
                 else {
                     resultado = suma_Enteros_Int(padre_subarbol);
                     Nodo resultado4 = new Nodo(null, null, null, resultado,"INT");
                     contador_Variable_Auxiliar++;
-                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("INT"));
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("INT","auxiliar",true));
                     return resultado4;
                 }
             case "-":
@@ -142,21 +164,21 @@ public class GeneradorAssembler {
                     resultado = resta_Pto_Flotante(padre_subarbol);
                     Nodo resultado5 = new Nodo(null, null, null, resultado,"DOUBLE");
                     contador_Variable_Auxiliar++;
-                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("DOUBLE"));
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("DOUBLE","auxiliar",true));
                     return resultado5;
                 }
                 else if ((tipo1.equals("ULONG"))) {
                     resultado = resta_Enteros_Ulong(padre_subarbol);
                     Nodo resultado6 = new Nodo(null, null, null, resultado,"ULONG");
                     contador_Variable_Auxiliar++;
-                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("ULONG"));
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("ULONG","auxiliar",true));
                     return resultado6;
                 }
                 else {
                     resultado = resta_Enteros_INT(padre_subarbol);
                     Nodo resultado7 = new Nodo(null, null, null, resultado,"INT");
                     contador_Variable_Auxiliar++;
-                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("INT"));
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("INT","auxiliar",true));
                     return resultado7;
                 }
             case "*":
@@ -165,21 +187,21 @@ public class GeneradorAssembler {
                     resultado = multiplicacion_Pto_Flotante(padre_subarbol);
                     Nodo resultado8 = new Nodo(null, null, null, resultado,"DOUBLE");
                     contador_Variable_Auxiliar++;
-                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("DOUBLE"));
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("DOUBLE","auxiliar",true));
                     return resultado8;
                 }
                 else if ((tipo3.equals("ULONG"))) {
                     resultado = multiplicacion_Enteros_Ulong(padre_subarbol);
                     Nodo resultado9 = new Nodo(null, null, null, resultado,"ULONG");
                     contador_Variable_Auxiliar++;
-                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("ULONG"));
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("ULONG","auxiliar",true));
                     return resultado9;
                 }
                 else {
                     resultado = multiplicacion_Enteros_Int(padre_subarbol);
                     Nodo resultado10 = new Nodo(null, null, null, resultado,"INT");
                     contador_Variable_Auxiliar++;
-                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("INT"));
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("INT","auxiliar",true));
                     return resultado10;
                 }
             case "/":
@@ -188,27 +210,27 @@ public class GeneradorAssembler {
                     resultado = division_Pto_Flotante(padre_subarbol);
                     Nodo resultado11 = new Nodo(null, null, null, resultado,"DOUBLE");
                     contador_Variable_Auxiliar++;
-                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("DOUBLE"));
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("DOUBLE","auxiliar",true));
                     return resultado11;
                 }
                 else if ((tipo4.equals("ULONG"))) {
                     resultado = division_Enteros_Ulong(padre_subarbol);
                     Nodo resultado12 = new Nodo(null, null, null, resultado,"ULONG");
                     contador_Variable_Auxiliar++;
-                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("ULONG"));
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("ULONG","auxiliar",true));
                     return resultado12;
                 }
                 else {
                     resultado = division_Enteros_Int(padre_subarbol);
                     Nodo resultado13 = new Nodo(null, null, null, resultado,"INT");
                     contador_Variable_Auxiliar++;
-                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("INT"));
+                    AnalizadorLexico.simbolos.put(resultado,new AtributosSimbolo("INT","auxiliar",true));
                     return resultado13;
                 }
             case "PRINT":
                 AtributosSimbolo atributos = new AtributosSimbolo("PRINT", padre_subarbol.getCadenaImpresion());//le deberia pasar del nodo padre el lexema y como tipo PRINT
                 AnalizadorLexico.simbolos.put("msj_"+contador_print, atributos);
-                String codigo = "invoke MessageBox, NULL, addr msj_"+contador_print + ", addr msj_"+contador_print+", MB_OK\n";
+                String codigo = "invoke MessageBox, NULL, addr msj_"+contador_print + ", addr msj_"+contador_print+", MB_OK";
                 contador_print++;
                 codigoFinal.add(codigo);
                 return null;
@@ -216,7 +238,8 @@ public class GeneradorAssembler {
                 ArrayList<ParVariableAtributo> pares_variable_atributo = padre_subarbol.getParesVariableAtributo();
                 for (ParVariableAtributo par:pares_variable_atributo)
                 	intercambiar_Valor_Atributo(par.getVariable(), par.getAtributo(), AnalizadorLexico.simbolos.get((par.getAtributo())).getTipo()); //si se trata de una invocacion a un metodo de clase, se copia el valor de la variable de la instancia en el atributo de la clase correspondiente (ida)
-                String codigo22 = "CALL " + padre_subarbol.getNodoHijoIzquierdo().getSimbolo();
+                String nombre_funcion = padre_subarbol.getNodoHijoIzquierdo().getSimbolo().replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+                String codigo22 = "CALL " + nombre_funcion;
                 codigoFinal.add(codigo22);
                 for (ParVariableAtributo par:pares_variable_atributo)
                 	intercambiar_Valor_Atributo(par.getAtributo(), par.getVariable(), AnalizadorLexico.simbolos.get((par.getAtributo())).getTipo()); //si se trata de una invocacion a un metodo de clase, se copia el valor del atributo de la clase en la variable de la instancia correspondiente (vuelta)
@@ -257,104 +280,130 @@ public class GeneradorAssembler {
     	}
     	else if (tipo_variables.equals("ULONG")) {
     		codigo = "MOV EAX," + variable1 + "\n"
-    	    		+ "MOV " + variable2 + ",AX";
+    	    		+ "MOV " + variable2 + ",EAX";
     	}
     	else if (tipo_variables.equals("DOUBLE")) {
     		codigo = "FLD " + variable1 + "\n"
-    		+ "FST " + variable2;
+    		+ "FSTP " + variable2;
     	}
+        codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
     	codigoFinal.add(codigo);
     }
-
-    private String suma_Pto_Flotante(Nodo nodo){
-        if (nodo.getNodoHijoIzquierdo().getValorConstante() == null && nodo.getNodoHijoDerecho().getValorConstante() == null) {
-            String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
-                    + "FADD \n"
-                    + "FSTP @aux" + contador_Variable_Auxiliar;
-            codigoFinal.add(codigo);
-        }
-        else if (nodo.getNodoHijoIzquierdo().getValorConstante() == null)
-        {
-            String codigo4 = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
-                    + "FADD \n"
-                    + "FSTP @aux" + contador_Variable_Auxiliar;
-            codigoFinal.add(codigo4);
-        }
-        else if(nodo.getNodoHijoDerecho().getValorConstante() == null)
-        {
-            String codigo4 = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
-                    + "FADD \n"
-                    + "FSTP @aux" + contador_Variable_Auxiliar;
-            codigoFinal.add(codigo4);
-        }
-        else
-        {
-            String codigo4 = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
-                    + "FADD \n"
-                    + "FSTP @aux" + contador_Variable_Auxiliar;
-            codigoFinal.add(codigo4);
-        }
-        return "@aux"+contador_Variable_Auxiliar;
-    }
-    private String suma_Enteros_Int(Nodo nodo){
+     private String suma_Enteros_Int(Nodo nodo){
         if (nodo.getNodoHijoIzquierdo().getValorConstante() == null && nodo.getNodoHijoDerecho().getValorConstante() == null) {
             String codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "ADD AX ," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
-                    + "JO error_overflow_suma_int \n" //CONTROL OVERFLOW
-                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX"; //EL JO ES PARA CONTROLAR EL OVERFLOW
+                    + "ADD AX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "JO error_overflow_suma_int\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar +",AX";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         else if(nodo.getNodoHijoIzquierdo().getValorConstante() != null){
             String codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "ADD AX ," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
-                    + "JO error_overflow_suma_int \n" //CONTROL OVERFLOW
-                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX"; //EL JO ES PARA CONTROLAR EL OVERFLOW
+                    + "ADD AX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "JO error_overflow_suma_int\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar +",AX";
+            codigo =codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
-        else if(nodo.getNodoHijoDerecho().getValorConstante() != null) {
+        else if(nodo.getNodoHijoDerecho().getValorConstante() != null){
             String codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "ADD AX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
-                    + "JO error_overflow_suma_int \n" //CONTROL OVERFLOW
-                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX"; //EL JO ES PARA CONTROLAR EL OVERFLOW
+                    + "ADD AX," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "JO error_overflow_suma_int\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar +",AX";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
-        else {
-            String codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "ADD AX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
-                    + "JO error_overflow_suma_int \n" //CONTROL OVERFLOW
-                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX"; //EL JO ES PARA CONTROLAR EL OVERFLOW
+        else{
+             String codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
+                    + "ADD AX," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "JO error_overflow_suma_int\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar +",AX";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         return "@aux"+contador_Variable_Auxiliar;
+    }
+
+    private String suma_Pto_Flotante(Nodo nodo){
+       if (nodo.getNodoHijoIzquierdo().getValorConstante() == null && nodo.getNodoHijoDerecho().getValorConstante() == null) {
+            String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
+                    + "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "FADD \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+        }
+        else if(nodo.getNodoHijoIzquierdo().getValorConstante() != null){
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoIzquierdo().getValorConstante()));
+            String codigo = "FLD " + "@aux"+contador_Variable_Auxiliar + "\n";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+            contador_Variable_Auxiliar++;
+            codigo = "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "FADD \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+        }
+        else if(nodo.getNodoHijoDerecho().getValorConstante() != null){
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoDerecho().getValorConstante()));
+            String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
+                    + "FLD " + "@aux"+contador_Variable_Auxiliar;
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+            contador_Variable_Auxiliar++;        
+            codigo = "FADD \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+        }
+        else{
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoIzquierdo().getValorConstante()));
+            String codigo = "FLD " + "@aux"+contador_Variable_Auxiliar + "\n";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+            contador_Variable_Auxiliar++;
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoDerecho().getValorConstante()));
+            codigo ="FLD " + "@aux"+contador_Variable_Auxiliar + "\n"
+                    + "FADD \n";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+            contador_Variable_Auxiliar++;
+            codigo = "FSTP @aux" + contador_Variable_Auxiliar;
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+        }
+        return "@aux" + contador_Variable_Auxiliar;
     }
     
     private String suma_Enteros_Ulong(Nodo nodo){
         if (nodo.getNodoHijoIzquierdo().getValorConstante() == null && nodo.getNodoHijoDerecho().getValorConstante() == null) {
             String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "ADD EAX ," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "ADD EAX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         else if (nodo.getNodoHijoIzquierdo().getValorConstante() != null){
             String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "ADD EAX ," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "ADD EAX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         else if (nodo.getNodoHijoDerecho().getValorConstante() != null){
             String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "ADD EAX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "ADD EAX," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         else {
             String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "ADD EAX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "ADD EAX," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         return "@aux"+contador_Variable_Auxiliar;
@@ -363,27 +412,31 @@ public class GeneradorAssembler {
     private String multiplicacion_Enteros_Int(Nodo nodo){
         if (nodo.getNodoHijoIzquierdo().getValorConstante() == null && nodo.getNodoHijoDerecho().getValorConstante() == null) {
             String codigo1 = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "IMUL AX ," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "IMUL AX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo1);
         }
         else if(nodo.getNodoHijoIzquierdo().getValorConstante() != null){
             String codigo1 = "MOV AX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "IMUL AX ," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "IMUL AX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo1);
         }
         else if(nodo.getNodoHijoDerecho().getValorConstante() != null)
         {
             String codigo1 = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "IMUL AX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "IMUL AX," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo1);
         }
         else{
             String codigo1 = "MOV AX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "IMUL AX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "IMUL AX," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo1);
         }
         return "@aux"+contador_Variable_Auxiliar;
@@ -392,75 +445,195 @@ public class GeneradorAssembler {
     private String multiplicacion_Enteros_Ulong(Nodo nodo){
         if (nodo.getNodoHijoIzquierdo().getValorConstante() == null && nodo.getNodoHijoDerecho().getValorConstante() == null) {
             String codigo1 = "MOV EAX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "MUL EAX ," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "MUL EAX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo1);
         }
         else if(nodo.getNodoHijoIzquierdo().getValorConstante() != null){
             String codigo1 = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "MUL EAX ," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "MUL EAX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo1);
         }
         else if(nodo.getNodoHijoDerecho().getValorConstante() != null) {
             String codigo1 = "MOV EAX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "MUL EAX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "MUL EAX," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");        
             codigoFinal.add(codigo1);
         }
         else {
             String codigo1 = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "MUL EAX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "MUL EAX," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");                    
             codigoFinal.add(codigo1);
         }
         return "@aux"+contador_Variable_Auxiliar;
     }
 
     private String multiplicacion_Pto_Flotante(Nodo nodo){
-        String codigo;
+        String codigo = "";
         if (nodo.getNodoHijoIzquierdo().getValorConstante() == null && nodo.getNodoHijoDerecho().getValorConstante() == null) {
-             codigo = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+             codigo = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo().replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$") + "\n"
+                    + "FLD " + nodo.getNodoHijoDerecho().getSimbolo().replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$") + "\n"
                     + "FMUL \n"
-                    + "FSTSW @aux" + contador_Variable_Auxiliar + "\n"
-                    + "MOV AX , " + "@aux" + contador_Variable_Auxiliar + "\n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar + "\n"
+                    + "FLD limite_positivo_superior_double\n"
+                    + "FCOM\n" // comparo con limite positivo superior positivo 1.7976931348623157+308
+                    + "FSTSW AX\n"
                     + "SAHF\n"
-                    + "JO error_overflow_multiplicacion_double:\n";
+                    + "JB error_overflow_multiplicacion_double\n"  //salto si es mayor 
+                    + "FLD @aux" + contador_Variable_Auxiliar +"\n"
+                    + "FLD limite_positivo_inferior_double\n"
+                    + "FCOM\n" // comparo con limite positivo inferior positivo 2.2250738585072014D-308
+                    + "FSTSW AX\n"
+                    + "SAHF\n"
+                    + "JA chequeo_negativo" + contador_Variable_Auxiliar + "\n" //salto si es menor
+                    + "JMP continuacion_multiplicacion" + contador_Variable_Auxiliar +"\n"
+                    + "chequeo_negativo" + contador_Variable_Auxiliar + ":\n"
+                    + "FLD @aux" + contador_Variable_Auxiliar +"\n"
+                    + "FLD limite_negativo_superior_double\n"
+                    + "FCOM\n" // comparo con limite inferior superior negativo  -2.2250738585072014D-308
+                    + "FSTSW AX\n"
+                    + "SAHF\n"
+                    + "JB error_overflow_multiplicacion_double \n" //salto si es mayor
+                    + "JMP chequeo_negativo_inferior" + contador_Variable_Auxiliar + "\n" 
+                    + "chequeo_negativo_inferior" + contador_Variable_Auxiliar + ":\n"
+                    + "FLD @aux" + contador_Variable_Auxiliar +"\n"
+                    + "FLD limite_negativo_inferior_double\n"
+                    + "FCOM\n"  //comparo con limite inferior negativo -1.7976931348623157D+308
+                    + "FSTSW AX\n"
+                    + "SAHF\n"
+                    + "JA error_overflow_multiplicacion_double \n" //salto si es menor
+                    + "JMP continuacion_multiplicacion" + contador_Variable_Auxiliar +"\n"
+                    + "continuacion_multiplicacion" + contador_Variable_Auxiliar +":";
         }
         else if(nodo.getNodoHijoIzquierdo().getValorConstante() != null){
-             codigo = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
-                    + "FMUL \n"
-                    + "FSTSW @aux" + contador_Variable_Auxiliar + "\n"
-                    + "MOV AX , " + "@aux" + contador_Variable_Auxiliar + "\n"
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoIzquierdo().getValorConstante()));
+             codigo = "FLD " + "@aux"+contador_Variable_Auxiliar;
+             codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+             codigoFinal.add(codigo);
+             contador_Variable_Auxiliar++;
+             codigo = "FLD " + nodo.getNodoHijoDerecho().getSimbolo().replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$") + "\n"
+                   + "FMUL \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar + "\n"
+                    + "FLD limite_positivo_superior_double\n"
+                    + "FCOM\n" // comparo con limite positivo superior positivo 1.7976931348623157+308
+                    + "FSTSW AX\n"
                     + "SAHF\n"
-                    + "JO error_overflow_multiplicacion_double:\n";
+                    + "JB error_overflow_multiplicacion_double\n"  //salto si es mayor 
+                    + "FLD @aux" + contador_Variable_Auxiliar +"\n"
+                    + "FLD limite_positivo_inferior_double\n"
+                    + "FCOM\n" // comparo con limite positivo inferior positivo 2.2250738585072014D-308
+                    + "FSTSW AX\n"
+                    + "SAHF\n"
+                    + "JA chequeo_negativo" + contador_Variable_Auxiliar + "\n" //salto si es menor
+                    + "JMP continuacion_multiplicacion" + contador_Variable_Auxiliar +"\n"
+                    + "chequeo_negativo" + contador_Variable_Auxiliar + ":\n"
+                    + "FLD @aux" + contador_Variable_Auxiliar +"\n"
+                    + "FLD limite_negativo_superior_double\n"
+                    + "FCOM\n" // comparo con limite inferior superior negativo  -2.2250738585072014D-308
+                    + "FSTSW AX\n"
+                    + "SAHF\n"
+                    + "JB error_overflow_multiplicacion_double \n" //salto si es mayor
+                    + "JMP chequeo_negativo_inferior" + contador_Variable_Auxiliar + "\n" 
+                    + "chequeo_negativo_inferior" + contador_Variable_Auxiliar + ":\n"
+                    + "FLD @aux" + contador_Variable_Auxiliar +"\n"
+                    + "FLD limite_negativo_inferior_double\n"
+                    + "FCOM\n"  //comparo con limite inferior negativo -1.7976931348623157D+308
+                    + "FSTSW AX\n"
+                    + "SAHF\n"
+                    + "JA error_overflow_multiplicacion_double \n" //salto si es menor
+                    + "JMP continuacion_multiplicacion" + contador_Variable_Auxiliar +"\n"
+                    + "continuacion_multiplicacion" + contador_Variable_Auxiliar +":";
         }
         else if(nodo.getNodoHijoDerecho().getValorConstante() != null) {
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoDerecho().getValorConstante()));
              codigo = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getValorConstante()+ "\n"
-                    + "FMUL \n"
-                    + "FSTSW @aux" + contador_Variable_Auxiliar + "\n"
-                    + "MOV AX , " + "@aux" + contador_Variable_Auxiliar + "\n"
+                    + "FLD " + "@aux"+contador_Variable_Auxiliar;
+             codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+             codigoFinal.add(codigo);
+             contador_Variable_Auxiliar++;
+             codigo = "FMUL \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar + "\n"
+                    + "FLD limite_positivo_superior_double\n"
+                    + "FCOM\n" // comparo con limite positivo superior positivo 1.7976931348623157+308
+                    + "FSTSW AX\n"
                     + "SAHF\n"
-                    + "JO error_overflow_multiplicacion_double:\n";
+                    + "JB error_overflow_multiplicacion_double\n"  //salto si es mayor 
+                    + "FLD @aux" + contador_Variable_Auxiliar +"\n"
+                    + "FLD limite_positivo_inferior_double\n"
+                    + "FCOM\n" // comparo con limite positivo inferior positivo 2.2250738585072014D-308
+                    + "FSTSW AX\n"
+                    + "SAHF\n"
+                    + "JA chequeo_negativo" + contador_Variable_Auxiliar + "\n" //salto si es menor
+                    + "JMP continuacion_multiplicacion" + contador_Variable_Auxiliar +"\n"
+                    + "chequeo_negativo" + contador_Variable_Auxiliar + ":\n"
+                    + "FLD @aux" + contador_Variable_Auxiliar +"\n"
+                    + "FLD limite_negativo_superior_double\n"
+                    + "FCOM\n" // comparo con limite inferior superior negativo  -2.2250738585072014D-308
+                    + "FSTSW AX\n"
+                    + "SAHF\n"
+                    + "JB error_overflow_multiplicacion_double \n" //salto si es mayor
+                    + "JMP chequeo_negativo_inferior" + contador_Variable_Auxiliar + "\n" 
+                    + "chequeo_negativo_inferior" + contador_Variable_Auxiliar + ":\n"
+                    + "FLD @aux" + contador_Variable_Auxiliar +"\n"
+                    + "FLD limite_negativo_inferior_double\n"
+                    + "FCOM\n"  //comparo con limite inferior negativo -1.7976931348623157D+308
+                    + "FSTSW AX\n"
+                    + "SAHF\n"
+                    + "JA error_overflow_multiplicacion_double \n" //salto si es menor
+                    + "JMP continuacion_multiplicacion" + contador_Variable_Auxiliar +"\n"
+                    + "continuacion_multiplicacion" + contador_Variable_Auxiliar +":";
         }
         else {
-             codigo = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getValorConstante()+ "\n"
-                    + "FMUL \n"
-                    + "FSTSW @aux" + contador_Variable_Auxiliar + "\n"
-                    + "MOV AX , " + "@aux" + contador_Variable_Auxiliar + "\n"
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoIzquierdo().getValorConstante()));
+             codigo = "FLD " + "@aux"+contador_Variable_Auxiliar + "\n";
+             codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+             codigoFinal.add(codigo);
+             contador_Variable_Auxiliar++;
+             codigo ="FLD " + "@aux"+contador_Variable_Auxiliar + "\n";
+             codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+             codigoFinal.add(codigo);
+             contador_Variable_Auxiliar++;
+             AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoDerecho().getValorConstante()));
+             codigo = "FMUL \n"
+                    + "FSTP @aux" + contador_Variable_Auxiliar + "\n"
+                    + "FLD limite_positivo_superior_double\n"
+                    + "FCOM\n" // comparo con limite positivo superior positivo 1.7976931348623157+308
+                    + "FSTSW AX\n"
                     + "SAHF\n"
-                    + "JO error_overflow_multiplicacion_double:\n";
+                    + "JB error_overflow_multiplicacion_double\n"  //salto si es mayor 
+                    + "FLD @aux" + contador_Variable_Auxiliar +"\n"
+                    + "FLD limite_positivo_inferior_double\n"
+                    + "FCOM\n" // comparo con limite positivo inferior positivo 2.2250738585072014D-308
+                    + "FSTSW AX\n"
+                    + "SAHF\n"
+                    + "JA chequeo_negativo" + contador_Variable_Auxiliar + "\n" //salto si es menor
+                    + "JMP continuacion_multiplicacion" + contador_Variable_Auxiliar +"\n"
+                    + "chequeo_negativo" + contador_Variable_Auxiliar + ":\n"
+                    + "FLD @aux" + contador_Variable_Auxiliar +"\n"
+                    + "FLD limite_negativo_superior_double\n"
+                    + "FCOM\n" // comparo con limite inferior superior negativo  -2.2250738585072014D-308
+                    + "FSTSW AX\n"
+                    + "SAHF\n"
+                    + "JB error_overflow_multiplicacion_double \n" //salto si es mayor
+                    + "JMP chequeo_negativo_inferior" + contador_Variable_Auxiliar + "\n" 
+                    + "chequeo_negativo_inferior" + contador_Variable_Auxiliar + ":\n"
+                    + "FLD @aux" + contador_Variable_Auxiliar +"\n"
+                    + "FLD limite_negativo_inferior_double\n"
+                    + "FCOM\n"  //comparo con limite inferior negativo -1.7976931348623157D+308
+                    + "FSTSW AX\n"
+                    + "SAHF\n"
+                    + "JA error_overflow_multiplicacion_double \n" //salto si es menor
+                    + "JMP continuacion_multiplicacion" + contador_Variable_Auxiliar +"\n"
+                    + "continuacion_multiplicacion" + contador_Variable_Auxiliar +":";
         }
         // agrego la variable auxiliar a la tabla de simbolos
-        AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE"));
-        contador_Variable_Auxiliar++;
-        codigoFinal.add(codigo);
-        codigo = "FSTP @aux" + contador_Variable_Auxiliar;
-        codigoFinal.add(codigo);
+        codigoFinal.add(codigo); // CHEQUEO QUE NO HAYA OVERFLOW EN LA MULTIPLICACION
         return "@aux"+contador_Variable_Auxiliar;
     }
 
@@ -470,6 +643,7 @@ public class GeneradorAssembler {
                     + "CWD \n"
                     + "IDIV " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo1);
         }
         else if(nodo.getNodoHijoIzquierdo().getValorConstante() != null){
@@ -477,6 +651,7 @@ public class GeneradorAssembler {
                     + "CWD \n"
                     + "IDIV " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo1);
         }
         else if(nodo.getNodoHijoDerecho().getValorConstante() != null){
@@ -484,6 +659,7 @@ public class GeneradorAssembler {
                     + "CWD \n"
                     + "IDIV " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo1);
         }
         else{
@@ -491,6 +667,7 @@ public class GeneradorAssembler {
                     + "CWD \n"
                     + "IDIV " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo1);
         }
         return "@aux"+contador_Variable_Auxiliar;
@@ -501,6 +678,7 @@ public class GeneradorAssembler {
                     + "MOV EDX,0 \n"
                     + "DIV " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo1);
         }
         else if(nodo.getNodoHijoIzquierdo().getValorConstante() != null){
@@ -508,6 +686,7 @@ public class GeneradorAssembler {
                     + "MOV EDX,0 \n"
                     + "DIV " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo1);
         }
         else if(nodo.getNodoHijoDerecho().getValorConstante() != null){
@@ -515,13 +694,15 @@ public class GeneradorAssembler {
                     + "MOV EDX,0 \n"
                     + "DIV " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo1 = codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo1);
         }
         else{
-             String codigo1 = "MOV AX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
+             String codigo1 = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                     + "CWD \n"
                     + "IDIV " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
-                    + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo1 =codigo1.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo1);
         }
         return "@aux"+contador_Variable_Auxiliar;
@@ -532,56 +713,77 @@ public class GeneradorAssembler {
                     + "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "FDIV \n"
                     + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         else if(nodo.getNodoHijoIzquierdo().getValorConstante() != null){
-            String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoIzquierdo().getValorConstante()));
+            String codigo = "FLD " + "@aux"+contador_Variable_Auxiliar + "\n";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+            contador_Variable_Auxiliar++;
+            codigo = "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "FDIV \n"
                     + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         else if(nodo.getNodoHijoDerecho().getValorConstante() != null){
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoDerecho().getValorConstante()));
             String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "FLD " + "@aux"+contador_Variable_Auxiliar + "\n"
                     + "FDIV \n"
                     + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+            contador_Variable_Auxiliar++;
+        }
+        else{
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoIzquierdo().getValorConstante()));
+            String codigo = "FLD " + "@aux"+contador_Variable_Auxiliar + "\n";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+            contador_Variable_Auxiliar++;
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoDerecho().getValorConstante()));
+            codigo ="FLD " + "@aux"+contador_Variable_Auxiliar + "\n"
+                    + "FDIV \n";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+            contador_Variable_Auxiliar++;
+            codigo = "FSTP @aux" + contador_Variable_Auxiliar;
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
-        else {
-             String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
-                    + "FDIV \n"
-                    + "FSTP @aux" + contador_Variable_Auxiliar;
-            codigoFinal.add(codigo);
-        }
-        return "@aux"+contador_Variable_Auxiliar;
+        return "@aux" + contador_Variable_Auxiliar;
     }
 
     private String resta_Enteros_INT(Nodo nodo){
         if (nodo.getNodoHijoIzquierdo().getValorConstante() == null && nodo.getNodoHijoDerecho().getValorConstante() == null) {
             String codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "SUB AX ," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "SUB AX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         else if(nodo.getNodoHijoIzquierdo().getValorConstante() != null){
             String codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "SUB AX ," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "SUB AX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigo =codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         else if(nodo.getNodoHijoDerecho().getValorConstante() != null){
             String codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "SUB AX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "SUB AX," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "MOV @aux" + contador_Variable_Auxiliar + ",AX";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         else{
-             String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
-                    + "FDIV \n"
-                    + "FSTP @aux" + contador_Variable_Auxiliar;
+             String codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
+                    + "SUB AX," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "MOV @aux" + contador_Variable_Auxiliar +",AX";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         return "@aux"+contador_Variable_Auxiliar;
@@ -589,30 +791,34 @@ public class GeneradorAssembler {
     private String resta_Enteros_Ulong(Nodo nodo){
         if (nodo.getNodoHijoIzquierdo().getValorConstante() == null && nodo.getNodoHijoDerecho().getValorConstante() == null) {
             String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "SUB EAX ," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "SUB EAX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "JS error_rdo_negativo_resta_ulong \n" //CONTROLA QUE NO HAYA DADO NEGATIVO
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         else if(nodo.getNodoHijoIzquierdo().getValorConstante() != null){
             String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "SUB EAX ," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    + "SUB EAX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "JS error_rdo_negativo_resta_ulong \n" //CONTROLA QUE NO HAYA DADO NEGATIVO
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         else if(nodo.getNodoHijoDerecho().getValorConstante() != null){
             String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "SUB EAX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "SUB EAX," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "JS error_rdo_negativo_resta_ulong \n" //CONTROLA QUE NO HAYA DADO NEGATIVO
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         else {
              String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "SUB EAX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "SUB EAX," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
                     + "JS error_rdo_negativo_resta_ulong \n" //CONTROLA QUE NO HAYA DADO NEGATIVO
                     + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         return "@aux"+contador_Variable_Auxiliar;
@@ -624,33 +830,51 @@ public class GeneradorAssembler {
                     + "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "FSUB \n"
                     + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         else if(nodo.getNodoHijoIzquierdo().getValorConstante() != null){
-            String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoIzquierdo().getValorConstante()));
+            String codigo = "FLD " + "@aux"+contador_Variable_Auxiliar + "\n";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+            contador_Variable_Auxiliar++;
+            codigo = "FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                     + "FSUB \n"
                     + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         else if(nodo.getNodoHijoDerecho().getValorConstante() != null){
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoDerecho().getValorConstante()));
             String codigo = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                    + "FLD " + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
+                    + "FLD " + "@aux"+contador_Variable_Auxiliar + "\n"
                     + "FSUB \n"
                     + "FSTP @aux" + contador_Variable_Auxiliar;
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
+            contador_Variable_Auxiliar++;
         }
         else{
-             String codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                    + "SUB EAX ," + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
-                    + "JS error_rdo_negativo_resta_ulong \n" //CONTROLA QUE NO HAYA DADO NEGATIVO
-                    + "MOV @aux" + contador_Variable_Auxiliar + ",EAX";
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoIzquierdo().getValorConstante()));
+            String codigo = "FLD " + "@aux"+contador_Variable_Auxiliar + "\n";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+            contador_Variable_Auxiliar++;
+            AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoDerecho().getValorConstante()));
+            codigo ="FLD " + "@aux"+contador_Variable_Auxiliar + "\n"
+                    + "FSUB \n";
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+            codigoFinal.add(codigo);
+            contador_Variable_Auxiliar++;
+            codigo = "FSTP @aux" + contador_Variable_Auxiliar;
+            codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
             codigoFinal.add(codigo);
         }
         return "@aux" + contador_Variable_Auxiliar;
     }
     private String salto(){
-        String codigo = "JMP label " + contador_Label;
+        String codigo = "JMP label" + contador_Label;
         codigoFinal.add(codigo);
         pila.add("label"+contador_Label+":"); //apilo en el tope de la pila
         contador_Label++;
@@ -659,7 +883,7 @@ public class GeneradorAssembler {
 
     // SALTOS CONDICIONALES ARITMETICOS SIGNADO (NUMEROS POSITVOS , NEGATIVOS Y CERO)
     private String salto_Menor_Aritmetico_Signado(int nrolabel){
-        String codigo = "JLE label " + nrolabel;
+        String codigo = "JLE label" + nrolabel;
         codigoFinal.add(codigo);
         pila.add("label"+nrolabel+":"); //apilo en el tope de la pila
         contador_Label++;
@@ -751,22 +975,36 @@ public class GeneradorAssembler {
             if (nodo.getNodoHijoDerecho().getTipo().equals("INT")) {
                 codigo = "MOV AX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                         + "MOV " + nodo.getNodoHijoIzquierdo().getSimbolo() + ",AX";
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                 codigoFinal.add(codigo);
             }
             else if (nodo.getNodoHijoDerecho().getTipo().equals("ULONG")) {
                 codigo = "MOV EAX," + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
                         + "MOV " + nodo.getNodoHijoIzquierdo().getSimbolo() + ",EAX";
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                 codigoFinal.add(codigo);
             }
             else {
-                codigo ="FLD " + nodo.getNodoHijoDerecho().getSimbolo()
-                    +"FST " + nodo.getNodoHijoIzquierdo().getSimbolo();
+                codigo ="FLD " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                    +"FSTP " + nodo.getNodoHijoIzquierdo().getSimbolo();
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                 codigoFinal.add(codigo);
             }
         }
         else {
-            codigo = "MOV " + nodo.getNodoHijoIzquierdo().getSimbolo() + "," + nodo.getNodoHijoDerecho().getValorConstante();
-            codigoFinal.add(codigo);
+            if(nodo.getNodoHijoDerecho().getTipo() != null && !nodo.getNodoHijoDerecho().getTipo().equals("DOUBLE")){
+                codigo = "MOV " + nodo.getNodoHijoIzquierdo().getSimbolo() + "," + nodo.getNodoHijoDerecho().getValorConstante();
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+                codigoFinal.add(codigo);
+            }
+            else if (nodo.getNodoHijoDerecho().getTipo() != null){
+                AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoDerecho().getValorConstante()));
+                codigo ="FLD " + "@aux"+contador_Variable_Auxiliar + "\n"
+                    +"FSTP " + nodo.getNodoHijoIzquierdo().getSimbolo();
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+                codigoFinal.add(codigo);
+                contador_Variable_Auxiliar++;
+            } 
         }
         return "";
     }
@@ -785,22 +1023,22 @@ public class GeneradorAssembler {
             if (nodo.getTipo().equals("INT")) {
                 codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
                         + "CMP AX," + nodo.getNodoHijoDerecho().getSimbolo();
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                 codigoFinal.add(codigo);
                 condicion_Sentencia_Control_Signado();
             } else if (nodo.getTipo().equals("ULONG")) {
                 codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
                         + "CMP EAX," + nodo.getNodoHijoDerecho().getSimbolo();
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                 codigoFinal.add(codigo);
                 condicion_Sentencia_Control_Sin_Signo();
             } else {
                 codigo = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                        + "FCOM" + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
-                        + "FSTSW @aux" + contador_Variable_Auxiliar + "\n" ///preguntar si el label del for deberia estar en la linea de abajo
-                        + "MOV AX,@aux" + contador_Variable_Auxiliar + "\n"
+                        + "FCOM " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                        + "FSTSW AX" + "\n" ///preguntar si el label del for deberia estar en la linea de abajo
                         + "SAHF";
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                 codigoFinal.add(codigo);
-                AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE"));
-                contador_Variable_Auxiliar++;
                 condicion_Sentencia_Control_Sin_Signo();
             }
         }
@@ -808,69 +1046,78 @@ public class GeneradorAssembler {
             if (nodo.getTipo().equals("INT")) {
                 codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                         + "CMP AX," + nodo.getNodoHijoDerecho().getSimbolo();
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                 codigoFinal.add(codigo);
                 condicion_Sentencia_Control_Signado();
             } else if (nodo.getTipo().equals("ULONG")) {
                 codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                         + "CMP EAX," + nodo.getNodoHijoDerecho().getSimbolo();
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                 codigoFinal.add(codigo);
                 condicion_Sentencia_Control_Sin_Signo();
             } else {
-                codigo = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                        + "FCOM" + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
-                        + "FSTSW @aux" + contador_Variable_Auxiliar + "\n" ///preguntar si el label del for deberia estar en la linea de abajo
-                        + "MOV AX,@aux" + contador_Variable_Auxiliar + "\n"
+                AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoIzquierdo().getValorConstante()));
+                codigo = "FLD " + "@aux"+contador_Variable_Auxiliar + "\n"
+                        + "FCOM " + nodo.getNodoHijoDerecho().getSimbolo() + "\n"
+                        + "FSTSW AX" + "\n" ///preguntar si el label del for deberia estar en la linea de abajo
                         + "SAHF";
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                 codigoFinal.add(codigo);
-                AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE"));
-                contador_Variable_Auxiliar++;
                 condicion_Sentencia_Control_Sin_Signo();
+                contador_Variable_Auxiliar++;
             }
         }
         else if(nodo.getNodoHijoDerecho().getValorConstante() != null) {
             if (nodo.getTipo().equals("INT")) {
                 codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
                         + "CMP AX," + nodo.getNodoHijoDerecho().getValorConstante();
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                 codigoFinal.add(codigo);
                 condicion_Sentencia_Control_Signado();
             } else if (nodo.getTipo().equals("ULONG")) {
                 codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
                         + "CMP EAX," + nodo.getNodoHijoDerecho().getValorConstante();
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                 codigoFinal.add(codigo);
                 condicion_Sentencia_Control_Sin_Signo();
             } else {
+                AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoDerecho().getValorConstante()));
                 codigo = "FLD " + nodo.getNodoHijoIzquierdo().getSimbolo() + "\n"
-                        + "FCOM" + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
-                        + "FSTSW @aux" + contador_Variable_Auxiliar + "\n" ///preguntar si el label del for deberia estar en la linea de abajo
-                        + "MOV AX,@aux" + contador_Variable_Auxiliar + "\n"
+                        + "FCOM " + "@aux"+contador_Variable_Auxiliar + "\n"
+                        + "FSTSW AX" + "\n" ///preguntar si el label del for deberia estar en la linea de abajo
                         + "SAHF";
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                 codigoFinal.add(codigo);
-                AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE"));
-                contador_Variable_Auxiliar++;
                 condicion_Sentencia_Control_Sin_Signo();
+                contador_Variable_Auxiliar++;
             }
         }
         else {
               if (nodo.getTipo().equals("INT")) {
                 codigo = "MOV AX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                         + "CMP AX," + nodo.getNodoHijoDerecho().getValorConstante();
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                 codigoFinal.add(codigo);
                 condicion_Sentencia_Control_Signado();
             } else if (nodo.getTipo().equals("ULONG")) {
                 codigo = "MOV EAX," + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
                         + "CMP EAX," + nodo.getNodoHijoDerecho().getValorConstante();
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                 codigoFinal.add(codigo);
                 condicion_Sentencia_Control_Sin_Signo();
             } else {
-                codigo = "FLD " + nodo.getNodoHijoIzquierdo().getValorConstante() + "\n"
-                        + "FCOM" + nodo.getNodoHijoDerecho().getValorConstante() + "\n"
-                        + "FSTSW @aux" + contador_Variable_Auxiliar + "\n" ///preguntar si el label del for deberia estar en la linea de abajo
-                        + "MOV AX,@aux" + contador_Variable_Auxiliar + "\n"
-                        + "SAHF";
+                AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoIzquierdo().getValorConstante()));
+                codigo = "FLD " + "@aux"+contador_Variable_Auxiliar + "\n";
                 codigoFinal.add(codigo);
-                AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE"));
                 contador_Variable_Auxiliar++;
+                AnalizadorLexico.simbolos.put("@aux"+contador_Variable_Auxiliar,new AtributosSimbolo("DOUBLE","auxiliar_constante",true,nodo.getNodoHijoDerecho().getValorConstante()));
+                codigo = "FCOM " + "@aux"+contador_Variable_Auxiliar + "\n"
+                        + "FSTSW AX" + "\n" ///preguntar si el label del for deberia estar en la linea de abajo
+                        + "SAHF";
+                codigo = codigo.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
+                codigoFinal.add(codigo);
                 condicion_Sentencia_Control_Sin_Signo();
+                contador_Variable_Auxiliar++;
             }
         }
         
@@ -948,7 +1195,8 @@ public class GeneradorAssembler {
         pila.remove(pila.size()-1);
     }
     private void fin_For(){
-        String codigo = "JMP " +pila.get(pila.size()-2);
+        String label_fin_for = pila.get(pila.size()-2).replace(":","");
+        String codigo = "JMP " + label_fin_for;
         codigoFinal.add(codigo);
         codigo = pila.get(pila.size()-1);
         codigoFinal.add(codigo);

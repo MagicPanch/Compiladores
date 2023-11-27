@@ -57,7 +57,7 @@
 			RETURN,
 		END_IF,								*{Se deberia detectar para linea 56: "CLAUSULA DE SELECCION IF CON BLOQUE DE SENTENCIAS EJECUTABLES DE RETORNO COMPLETO Y ELSE CON SENTENCIA EJECUTABLE DE RETORNO COMPLETO"}*				
 	},										*{Se deberia detectar para linea 57: "DECLARACION DE FUNCION"}*
-
+	ULONG _ulong1,
 	ULONG ulong1 ,							*{Se deberia detectar para linea 59: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
 	funcion1(ulong1 + ulong1),				*{Se deberia detectar para linea 60: "INVOCACION A FUNCION"}*
 	funcion1(ulong1),						*{Se deberia detectar para linea 61: "INVOCACION A FUNCION"}*
@@ -74,10 +74,11 @@
 	inst_c2.c1.funcion_interfaz(5_i),
 	INT i,
 	INT j,
+	double1 = 1.5,
 	FOR i IN RANGE (4_i;32767_i;3_i) {
 		FOR j IN RANGE (0_i;100_i;-10_i)
 			inst_c2.funcion_c2(),			*{Se deberia detectar para linea 73: "INVOCACION A FUNCION" y "SENTENCIA FOR CON SENTENCIA EJECUTABLE"}*
-		double1 = i / inst_c1._atributo1 + 3.0,			*{Se deberia detectar para linea 74: "ASIGNACION USANDO OPERADOR DE IGUAL"}*
+		double1 = double3 / double1 + 3.0,			*{Se deberia detectar para linea 74: "ASIGNACION USANDO OPERADOR DE IGUAL"}*
 	        funcion2(),
 	},										*{Se deberia detectar para linea 75: "SENTENCIA FOR CON BLOQUE DE SENTENCIAS EJECUTABLES"}*
 }							*{Se deberia detectar para linea 77: "PROGRAMA"}*											
