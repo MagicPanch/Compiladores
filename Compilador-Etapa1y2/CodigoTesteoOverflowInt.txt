@@ -1,8 +1,11 @@
 {
 	INT x; y,
-	x = -32000_i,
-	y = -1000_i,
-	INT z,
-	z = x + y,
+	x = 5_i,
+	y = 2_i,
+	INT z; g; d; s,
+	z = x / y,
+	g = x / 2_i,
+	d = 10_i / y,
+	s = 5_i / 5_i,
 	PRINT % LLEGO HASTA ACA %,
 }

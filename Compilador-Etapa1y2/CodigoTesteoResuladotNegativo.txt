@@ -1,8 +1,10 @@
 {
 	ULONG x; y,
-	x = 1000_ul,
-	y = 2000_ul,
-	ULONG z,
-	z = x - y,
-	PRINT % LLEGO HASTA ACA %,
+	x = 5_ul,
+	y = 2_ul,
+	ULONG z; g; d; s,
+	z = x / y,
+	g = x / 5_ul,
+	d = 5_ul / y,
+	s = 300_ul / 20_ul,
 }

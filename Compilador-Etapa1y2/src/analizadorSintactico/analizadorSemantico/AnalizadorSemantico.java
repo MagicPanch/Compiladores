@@ -658,10 +658,10 @@ public class AnalizadorSemantico {
 		}
 	}
 	
-	private String obtenerAmbitoClaseImplementada() {
-		String tipo_ambito = obtenerTipoAmbitoContenedor(ambito_actual);
+	private String obtenerAmbitoClaseImplementada(String ambito) {
+		String tipo_ambito = obtenerTipoAmbitoContenedor(ambito);
 		if (tipo_ambito.equals("ambito_simple")) {
-			String ambito_superior = obtenerLexemaAmbitoSuperior(ambito_actual);
+			String ambito_superior = obtenerLexemaAmbitoSuperior(ambito);
 			if (ambito_superior != null && obtenerTipoAmbitoContenedor(ambito_superior).equals("ambito_clausula_impl")) { //si el ambito contenedor es un ambito_simple y a su vez el ambito contenedor superior es un ambito_clausula_impl, es porque la referencia se encontro de una funcion de clausula IMPL. En este caso, hay que tener en cuenta que la referencia puede no existir en ese ambito pero si en la clase de la cual se implementan sus metodos, lo que implica tener que buscarlo ahi (ya que en teoria habria que poder usar por ejemplo los atributos de esa clase)
 				String nombre_clase_implementada = ambito_superior.substring(ambito_superior.lastIndexOf("<")+1, ambito_superior.length()-1);
 				String ambito_superior_clausula = obtenerLexemaAmbitoSuperior(ambito_superior); //es el ambito donde esta contenida la clausula
@@ -680,7 +680,7 @@ public class AnalizadorSemantico {
 	}
 	
 	private String obtenerReferenciaEnAmbitoClaseAsociada(String referencia, ArrayList<String> usos) { //este metodo permite buscar una referencia en el ambito de una clase asociada a una clausula IMPL, ya que si dentro de una funcion de clausula IMPL no se encuentra una referencia, tranquilamente puede estar en la clase que contiene realmente al prototipo de metodo que implementa
-		String ambito_clase_implementada = obtenerAmbitoClaseImplementada();
+		String ambito_clase_implementada = obtenerAmbitoClaseImplementada(ambito_actual);
 		if (ambito_clase_implementada != null)
 			return obtenerLexemaNmMasCercano(referencia, usos, ambito_clase_implementada); //se busca en el ambito de la clase implementada esa referencia, con los mismos usos que en un principio
 		return null;
@@ -1068,7 +1068,7 @@ public class AnalizadorSemantico {
 								if (ambito_actual.contains(ambito_clave_nm)) //dado que las instancias pueden haberse declarado en el ambito actual o en uno en el que este contenido
 									variables_instancia_invocacion.add(key); //ya que llegado a este punto quiere decir que se trata de una variable generada por la instancia que corresponde a un atributo de la clase del metodo invocado
 								else {
-									String ambito_clase_implementada = obtenerAmbitoClaseImplementada();
+									String ambito_clase_implementada = obtenerAmbitoClaseImplementada(ambito_actual);
 									if (ambito_clase_implementada != null && ambito_clase_implementada.contains(ambito_clave_nm)) //es el caso de que se este queriendo invocar a un metodo de una clase dentro de una funcion de una clausula IMPL, pero a traves de una instancia de una clase declarada en la clase que se esta implementando y no en la funcion implementadora que esta en el ambito de la clausula IMPL
 										variables_instancia_invocacion.add(key);
 								}
@@ -1088,12 +1088,24 @@ public class AnalizadorSemantico {
 		if (esAmbitoValido() && lexema_metodo != null) {
 			ArrayList<ParVariableAtributo> pares_mapeo_invocacion = new ArrayList<ParVariableAtributo>();
 			if (variables_instancia != null) {
+				System.out.println(variables_instancia.size());
 				int posicion_ambito_metodo_nm = lexema_metodo.indexOf(":");
 				if (posicion_ambito_metodo_nm != -1) { //no deberia ser -1
 					String ambito_metodo_nm = lexema_metodo.substring(posicion_ambito_metodo_nm+1, lexema_metodo.length());
 					if (esDeClase(ambito_metodo_nm)) {
 						for (String variable: variables_instancia) {
 							String lexema_atributo_nm = variable.substring(variable.lastIndexOf(".")+1, variable.indexOf(":")) + ":" + ambito_metodo_nm;
+							System.out.print(lexema_atributo_nm);
+							AtributosSimbolo atributos_lexema_atributo_nm = AnalizadorLexico.simbolos.get(lexema_atributo_nm);
+							if (atributos_lexema_atributo_nm != null && atributos_lexema_atributo_nm.getUso().equals("nombre_atributo")) //en teoria deberia cumplirse siempre si se llego hasta aca
+								pares_mapeo_invocacion.add(new ParVariableAtributo(variable, lexema_atributo_nm));
+						}
+					}
+					else if (esDeClausulaIMPL(ambito_metodo_nm)) { //caso de que el metodo implementado en realidad sea un metodo de una clausula IMPL que implementa a un prototipo de metodo de una clase
+						String ambito_interno_metodo_nm = ambito_metodo_nm + ":" + lexema_metodo.substring(0, posicion_ambito_metodo_nm);
+						String ambito_clase_implementada = obtenerAmbitoClaseImplementada(ambito_interno_metodo_nm);
+						for (String variable: variables_instancia) {
+							String lexema_atributo_nm = variable.substring(variable.lastIndexOf(".")+1, variable.indexOf(":")) + ":" + ambito_clase_implementada;
 							System.out.print(lexema_atributo_nm);
 							AtributosSimbolo atributos_lexema_atributo_nm = AnalizadorLexico.simbolos.get(lexema_atributo_nm);
 							if (atributos_lexema_atributo_nm != null && atributos_lexema_atributo_nm.getUso().equals("nombre_atributo")) //en teoria deberia cumplirse siempre si se llego hasta aca

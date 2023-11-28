@@ -1,8 +1,83 @@
 {
+	DOUBLE extra; extra2; extra3,
+	extra = -1.79769313486231D+308 * 1.0,
+	extra2 = 2.2250738585072014D-20,
 	DOUBLE x; y,
-	x = 1.79769313486231D+308,
-	y = 1.0,
-	DOUBLE z,
-	z = x * y,
-	PRINT % LLEGO HASTA ACA %,
+	INT i1; i2,
+	ULONG u1; u2,
+	i1 = 8_i,
+	i2 = 1_i,
+	u1 = 3_ul,
+	u2 = 5_ul,
+	x = 5.0,
+	y = 2.0,
+	DOUBLE z; g; d; s; a; b; c; e; f; j; k; t; r; p; o; v,
+	IF (-5.0 < -9.55)
+		PRINT % menor negativo double %,
+	END_IF,
+	IF (5.0 < y)
+		PRINT % hola %,
+	END_IF,
+	IF (1_i < i1)
+		PRINT % menor int %,
+	END_IF,
+	IF (-3.5555555 > -11.)
+		PRINT % mayor negativo double %,
+	END_IF,
+	IF (-33.5555555 > -11.)
+		PRINT % mayor negativo double especiall %,
+	END_IF,
+	r = -3.0053 + -2.1,
+	p = r - -3.0,
+	o = -5.11 / -3.,
+	v = -10.5 / o,
+	IF (5.0 < 2.0)
+		PRINT % menor %,
+	END_IF,
+	IF (x <= y)
+		PRINT % menor o igual %,
+	END_IF,
+	IF (8_i > 1_i)
+		PRINT % mayor int %,
+	END_IF,
+	IF (x !! 2.0)
+		PRINT % distinto %,
+	END_IF,
+	IF (u1 <= 5_ul)
+		PRINT % menor o igual ulong %,
+	END_IF,
+	z = x / y,
+	a = x * y,
+	g = x - 2.0,
+	b = x - 2.0,
+	d = 5.0 / y,
+	c = 5.0 * y,
+	s = 5.0 + 2.0,
+	e = 5.0 * 2.0,
+	f = x * y,
+	j = x * 2.0,
+	k = 5.0 * y,
+	t = 5.0 * 2.0,
+	IF (5.0 == 2.0)
+		PRINT % igual %,
+	END_IF,
+	IF (u1 > u2)
+		PRINT % mayor ulong %,
+	END_IF,
+	IF (i1 !! i2)
+		PRINT % distinto int %,
+	END_IF,
+	IF (u1 > u2)
+		PRINT % mayor o igual ulong %,
+	END_IF,
+	IF (5_ul >= 3_ul)
+		PRINT % mayor %,
+	END_IF,
+	IF (5.0 >= 2.0)
+		PRINT % mayor o igual %,
+	END_IF,
+	IF (i2 >= i1)
+		PRINT % mayor o igual int %,
+	END_IF,
+	u1 = u1 / 2_ul,
 }
