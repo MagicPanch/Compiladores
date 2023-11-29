@@ -246,7 +246,7 @@ public class AnalizadorSemantico {
 			else //si se declaro una referencia a una clase fuera de una clase en si, no hay que hacer ningun otro chequeo mas que exista la clase referenciada
 				return true;
 		}
-		AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: No existe una clase llamada '" + referencia_clase + "' al alcance que pueda heredesarse por composicion");
+		AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: No existe una clase llamada '" + referencia_clase + "' al alcance que pueda heredarse por composicion");
 		return false;
 	}
 	
@@ -795,42 +795,66 @@ public class AnalizadorSemantico {
 	
 	public void registrarReferenciasLadoDerechoAsignacion(String expresion_aritmetica) {
 		if (esAmbitoValido()) {
-			String[] elementos_expresion_aritmetica = expresion_aritmetica.split(" ");
-			for (String elemento: elementos_expresion_aritmetica)
-				if (!elemento.equals("+") && !elemento.equals("-") && !elemento.equals("*") && !elemento.equals("/") && !esConstante(elemento)) {
-					AtributosSimbolo atributos_referencia_nm = AnalizadorLexico.simbolos.get(elemento);
-					if (atributos_referencia_nm != null && (atributos_referencia_nm.getUso().equals("nombre_variable") || atributos_referencia_nm.getUso().equals("nombre_atributo") || atributos_referencia_nm.getUso().equals("nombre_parametro_formal"))) {
-						atributos_referencia_nm.variableReferenciada();
-						int posicion_primer_punto = elemento.indexOf(".");
-						int posicion_primer_ambito = elemento.indexOf(":");
-						if (posicion_primer_punto != -1 && posicion_primer_ambito != -1) {
-							String nombre_instancia = elemento.substring(0, posicion_primer_punto);
-							String lexema_instancia_nm = nombre_instancia + ":" + elemento.substring(posicion_primer_ambito+1, elemento.length());
-							AtributosSimbolo atributos_instancia_nm = AnalizadorLexico.simbolos.get(lexema_instancia_nm);
-							if (atributos_instancia_nm != null) //no tendria sentido que no se cumpla, ya que si existe una variable generada por un atributo de una instancia de una clase, entonces tiene que existir la instancia
-								atributos_instancia_nm.variableReferenciada(); //si se referencia del lado derecho de una asignacion a cualquier variable propia de una instancia, se considera como referenciada la instancia
+			if (expresion_aritmetica != null) {
+				String[] elementos_expresion_aritmetica = expresion_aritmetica.split(" ");
+				for (String elemento: elementos_expresion_aritmetica)
+					if (!elemento.equals("+") && !elemento.equals("-") && !elemento.equals("*") && !elemento.equals("/") && !esConstante(elemento)) {
+						AtributosSimbolo atributos_referencia_nm = AnalizadorLexico.simbolos.get(elemento);
+						if (atributos_referencia_nm != null && (atributos_referencia_nm.getUso().equals("nombre_variable") || atributos_referencia_nm.getUso().equals("nombre_atributo") || atributos_referencia_nm.getUso().equals("nombre_parametro_formal"))) {
+							atributos_referencia_nm.variableReferenciada();
+							int posicion_primer_punto = elemento.indexOf(".");
+							int posicion_primer_ambito = elemento.indexOf(":");
+							if (posicion_primer_punto != -1 && posicion_primer_ambito != -1) {
+								String nombre_instancia = elemento.substring(0, posicion_primer_punto);
+								String lexema_instancia_nm = nombre_instancia + ":" + elemento.substring(posicion_primer_ambito+1, elemento.length());
+								AtributosSimbolo atributos_instancia_nm = AnalizadorLexico.simbolos.get(lexema_instancia_nm);
+								if (atributos_instancia_nm != null) //no tendria sentido que no se cumpla, ya que si existe una variable generada por un atributo de una instancia de una clase, entonces tiene que existir la instancia
+									atributos_instancia_nm.variableReferenciada(); //si se referencia del lado derecho de una asignacion a cualquier variable propia de una instancia, se considera como referenciada la instancia
+							}
 						}
 					}
-				}
+			}
 		}
 	}
 	
-	public void chequearAsignacionValida(String lexema_referencia_lado_izquierdo, String expresion_aritmetica_lado_derecho) { //se chequea que una asignacion sea valida, o sea INT a INT, ULONG a ULONG o DOUBLE a DOUBLE (la funcion es similar a la de chequeo para operaciones entre un termino y un factor, pero no igual)
+	public void chequearAsignacionValida(String lexema_referencia_lado_izquierdo, String expresion_aritmetica_lado_derecho, boolean asignacion_menos_igual) { //se chequea que una asignacion sea valida, o sea INT a INT, ULONG a ULONG o DOUBLE a DOUBLE (la funcion es similar a la de chequeo para operaciones entre un termino y un factor, pero no igual)
 		if (esAmbitoValido()) {
 			AtributosSimbolo atributos_lexema_lado_izquierdo = AnalizadorLexico.simbolos.get(lexema_referencia_lado_izquierdo);
 			if (atributos_lexema_lado_izquierdo != null) { //si no hubo error no tiene sentido que sea null
 				String tipo_lado_derecho = determinarTipo(expresion_aritmetica_lado_derecho);
 				String tipo_lado_izquierdo = atributos_lexema_lado_izquierdo.getTipo();
-				if (tipo_lado_derecho != null) {
-					if (!tipo_lado_izquierdo.equals(tipo_lado_derecho) && (tipo_lado_izquierdo.equals("INT") || tipo_lado_izquierdo.equals("ULONG") || tipo_lado_izquierdo.equals("DOUBLE")) && (tipo_lado_derecho.equals("INT") || tipo_lado_derecho.equals("ULONG") || tipo_lado_derecho.equals("DOUBLE"))) //si los tipos no son iguales, hay un error especifico para el caso de que ambos sean de tipo numerico, y hay otros para cuando sean iguales o no, alguno es de un tipo no numerico
-						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Asignacion invalida, no puede asignarse un " + tipo_lado_derecho + " a un " + tipo_lado_izquierdo);
-					else if (!tipo_lado_izquierdo.equals("INT") && !tipo_lado_izquierdo.equals("ULONG") && !tipo_lado_izquierdo.equals("DOUBLE") && !tipo_lado_derecho.equals("INT") && !tipo_lado_derecho.equals("ULONG") && !tipo_lado_derecho.equals("DOUBLE")) //caso de que sean o no iguales los tipos del lado derecho e izquierdo, ambos son de tipos no numericos
-						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Asignacion invalida, tanto el lado izquierdo como derecho deben ser de tipo numerico, pero se esta queriendo asignar un " + tipo_lado_derecho + " (no numerico) a un " + tipo_lado_izquierdo + " (no numerico)");
-					else if (!tipo_lado_izquierdo.equals("INT") && !tipo_lado_izquierdo.equals("ULONG") && !tipo_lado_izquierdo.equals("DOUBLE")) //caso de que son tipos distintos y unicamente el lado izquierdo es no numerico
-						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Asignacion invalida, tanto el lado izquierdo como derecho deben ser de tipo numerico, pero se esta queriendo asignar un " + tipo_lado_derecho + " a un " + tipo_lado_izquierdo + " (no numerico)");
-					else if (!tipo_lado_derecho.equals("INT") && !tipo_lado_derecho.equals("ULONG") && !tipo_lado_derecho.equals("DOUBLE")) //caso de que son tipos distintos y unicamente el lado derecho es no numerico
-						AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Asignacion invalida, tanto el lado izquierdo como derecho deben ser de tipo numerico, pero se esta queriendo asignar un " + tipo_lado_derecho + " (no numerico) a un " + tipo_lado_izquierdo);
+				if (tipo_lado_derecho != null && tipo_lado_izquierdo != null) {
+					if (!tipo_lado_izquierdo.equals(tipo_lado_derecho) && (tipo_lado_izquierdo.equals("INT") || tipo_lado_izquierdo.equals("ULONG") || tipo_lado_izquierdo.equals("DOUBLE")) && (tipo_lado_derecho.equals("INT") || tipo_lado_derecho.equals("ULONG") || tipo_lado_derecho.equals("DOUBLE"))) { //si los tipos no son iguales, hay un error especifico para el caso de que ambos sean de tipo numerico, y hay otros para cuando sean iguales o no, alguno es de un tipo no numerico
+						if (asignacion_menos_igual) //ya que si la asignacion es un menos igual, hay que marcar error para la resta implicita
+							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Operacion invalida, no puede efectuarse una resta entre un " + tipo_lado_izquierdo + " y un " + tipo_lado_derecho);
+						else
+							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Asignacion invalida, no puede asignarse un " + tipo_lado_derecho + " a un " + tipo_lado_izquierdo);
+					}
+					else if (!tipo_lado_izquierdo.equals("INT") && !tipo_lado_izquierdo.equals("ULONG") && !tipo_lado_izquierdo.equals("DOUBLE") && !tipo_lado_derecho.equals("INT") && !tipo_lado_derecho.equals("ULONG") && !tipo_lado_derecho.equals("DOUBLE")) { //caso de que sean o no iguales los tipos del lado derecho e izquierdo, ambos son de tipos no numericos
+						if (asignacion_menos_igual) {
+							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: El tipo " + tipo_lado_izquierdo + " no es valido como factor en una expresion aritmetica");
+							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Asignacion invalida, tanto el lado izquierdo como derecho deben ser de tipo numerico, pero se esta queriendo asignar un " + tipo_lado_izquierdo + " (no numerico) a un " + tipo_lado_izquierdo + " (no numerico)");
+						}
+						else
+							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Asignacion invalida, tanto el lado izquierdo como derecho deben ser de tipo numerico, pero se esta queriendo asignar un " + tipo_lado_derecho + " (no numerico) a un " + tipo_lado_izquierdo + " (no numerico)");
+					}
+					else if (!tipo_lado_izquierdo.equals("INT") && !tipo_lado_izquierdo.equals("ULONG") && !tipo_lado_izquierdo.equals("DOUBLE")) { //caso de que son tipos distintos y unicamente el lado izquierdo es no numerico
+						if (asignacion_menos_igual) {
+							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: El tipo " + tipo_lado_izquierdo + " no es valido como factor en una expresion aritmetica");
+							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Asignacion invalida, tanto el lado izquierdo como derecho deben ser de tipo numerico, pero se esta queriendo asignar un " + tipo_lado_izquierdo + " (no numerico) a un " + tipo_lado_izquierdo + " (no numerico)");
+						}
+						else
+							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Asignacion invalida, tanto el lado izquierdo como derecho deben ser de tipo numerico, pero se esta queriendo asignar un " + tipo_lado_derecho + " a un " + tipo_lado_izquierdo + " (no numerico)");
+					}
+					else if (!tipo_lado_derecho.equals("INT") && !tipo_lado_derecho.equals("ULONG") && !tipo_lado_derecho.equals("DOUBLE")) { //caso de que son tipos distintos y unicamente el lado derecho es no numerico
+						if (asignacion_menos_igual)
+							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: El tipo " + tipo_lado_derecho + " no es valido como factor en una expresion aritmetica");
+						else
+							AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: Asignacion invalida, tanto el lado izquierdo como derecho deben ser de tipo numerico, pero se esta queriendo asignar un " + tipo_lado_derecho + " (no numerico) a un " + tipo_lado_izquierdo);
+					}
 				}
+				else if (tipo_lado_izquierdo != null) //si por ejemplo hay un nombre de clase del lado derecho
+					AnalizadorLexico.errores_y_warnings.add("Linea " + AnalizadorLexico.numero_linea + " / Posicion " + (AnalizadorLexico.indice_caracter_leer - 1) + " - ERROR: El lado derecho contiene un elemento que no es una variable ni constante");
 			}
 		}
 	}
@@ -1088,14 +1112,12 @@ public class AnalizadorSemantico {
 		if (esAmbitoValido() && lexema_metodo != null) {
 			ArrayList<ParVariableAtributo> pares_mapeo_invocacion = new ArrayList<ParVariableAtributo>();
 			if (variables_instancia != null) {
-				System.out.println(variables_instancia.size());
 				int posicion_ambito_metodo_nm = lexema_metodo.indexOf(":");
 				if (posicion_ambito_metodo_nm != -1) { //no deberia ser -1
 					String ambito_metodo_nm = lexema_metodo.substring(posicion_ambito_metodo_nm+1, lexema_metodo.length());
 					if (esDeClase(ambito_metodo_nm)) {
 						for (String variable: variables_instancia) {
 							String lexema_atributo_nm = variable.substring(variable.lastIndexOf(".")+1, variable.indexOf(":")) + ":" + ambito_metodo_nm;
-							System.out.print(lexema_atributo_nm);
 							AtributosSimbolo atributos_lexema_atributo_nm = AnalizadorLexico.simbolos.get(lexema_atributo_nm);
 							if (atributos_lexema_atributo_nm != null && atributos_lexema_atributo_nm.getUso().equals("nombre_atributo")) //en teoria deberia cumplirse siempre si se llego hasta aca
 								pares_mapeo_invocacion.add(new ParVariableAtributo(variable, lexema_atributo_nm));
@@ -1106,7 +1128,6 @@ public class AnalizadorSemantico {
 						String ambito_clase_implementada = obtenerAmbitoClaseImplementada(ambito_interno_metodo_nm);
 						for (String variable: variables_instancia) {
 							String lexema_atributo_nm = variable.substring(variable.lastIndexOf(".")+1, variable.indexOf(":")) + ":" + ambito_clase_implementada;
-							System.out.print(lexema_atributo_nm);
 							AtributosSimbolo atributos_lexema_atributo_nm = AnalizadorLexico.simbolos.get(lexema_atributo_nm);
 							if (atributos_lexema_atributo_nm != null && atributos_lexema_atributo_nm.getUso().equals("nombre_atributo")) //en teoria deberia cumplirse siempre si se llego hasta aca
 								pares_mapeo_invocacion.add(new ParVariableAtributo(variable, lexema_atributo_nm));

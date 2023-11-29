@@ -1,0 +1,111 @@
+{
+*{CODIGO DE TESTEO PARA EL ASSEMBLER DE OPERACIONES ARITMETICAS Y DE ASIGNACIONES (PARA CADA OPERACION ARITMETICA ESTAN LOS 4 CASOS, VARIABLE-VARIABLE, VARIABLE-CONSTANTE, CONSTANTE-VARIABLE Y CONSTANTE-CONSTANTE)}*
+
+	INT i1; i2; menos_igual_int,
+	ULONG u1; u2; menos_igual_ulong,
+	DOUBLE d1; d2; menos_igual_double,
+
+	INT a_sum; b_sum; c_sum; d_sum; a_res; b_res; c_res; d_res; a_mul; b_mul; c_mul; d_mul; a_div; b_div; c_div; d_div,
+	ULONG e_sum; f_sum; g_sum; h_sum; e_res; f_res; g_res; h_res; e_mul; f_mul; g_mul; h_mul; e_div; f_div; g_div; h_div,
+	DOUBLE i_sum; j_sum; k_sum; l_sum; i_res; j_res; k_res; l_res; i_mul; j_mul; k_mul; l_mul; i_div; j_div; k_div; l_div,
+
+	i1 = 5_i,
+	i2 = 2_i,
+	u1 = 5_ul,
+	u2 = 2_ul,
+	d1 = 5.0,
+	d2 = 2.0,
+	menos_igual_int = 8_i,
+	menos_igual_ulong = 8_ul,
+	menos_igual_double = 8.0,
+
+	*{LOS 4 CASOS DE SUMAS PARA CADA TIPO DE VARIABLE (EN TODOS LOS CASOS EL RESULTADO ES EL MISMO, YA QUE EN LOS QUE SE PONE UNA CONSTANTE EN REALIDAD ES EL VALOR REAL DE LA VARIABLE QUE VA AHI)}*
+	a_sum = i1 + i2,
+	b_sum = i1 + 2_i,
+	c_sum = 5_i + i2,
+	d_sum = 5_i + 2_i,
+
+	e_sum = u1 + u2,
+	f_sum = u1 + 2_ul,
+	g_sum = 5_ul + u2,
+	h_sum = 5_ul + 2_ul,
+
+	i_sum = d1 + d2,
+	j_sum = d1 + 2.0,
+	k_sum = 5.0 + d2,
+	l_sum = 5.0 + 2.0,
+
+	*{LOS 4 CASOS DE RESTAS PARA CADA TIPO DE VARIABLE (EN TODOS LOS CASOS EL RESULTADO ES EL MISMO, YA QUE EN LOS QUE SE PONE UNA CONSTANTE EN REALIDAD ES EL VALOR REAL DE LA VARIABLE QUE VA AHI)}*
+	a_res = i1 - i2,
+	b_res = i1 - 2_i,
+	c_res = 5_i - i2,
+	d_res = 5_i - 2_i,
+
+	e_res = u1 - u2,
+	f_res = u1 - 2_ul,
+	g_res = 5_ul - u2,
+	h_res = 5_ul - 2_ul,
+
+	i_res = d1 - d2,
+	j_res = d1 - 2.0,
+	k_res = 5.0 - d2,
+	l_res = 5.0 - 2.0,
+
+	*{LOS 4 CASOS DE MULTIPLICACIONES PARA CADA TIPO DE VARIABLE (EN TODOS LOS CASOS EL RESULTADO ES EL MISMO, YA QUE EN LOS QUE SE PONE UNA CONSTANTE EN REALIDAD ES EL VALOR REAL DE LA VARIABLE QUE VA AHI)}*
+	a_mul = i1 * i2,
+	b_mul = i1 * 2_i,
+	c_mul = 5_i * i2,
+	d_mul = 5_i * 2_i,
+
+	e_mul = u1 * u2,
+	f_mul = u1 * 2_ul,
+	g_mul = 5_ul * u2,
+	h_mul = 5_ul * 2_ul,
+
+	i_mul = d1 * d2,
+	j_mul = d1 * 2.0,
+	k_mul = 5.0 * d2,
+	l_mul = 5.0 * 2.0,
+
+	*{LOS 4 CASOS DE DIVISIONES PARA CADA TIPO DE VARIABLE (EN TODOS LOS CASOS EL RESULTADO ES EL MISMO, YA QUE EN LOS QUE SE PONE UNA CONSTANTE EN REALIDAD ES EL VALOR REAL DE LA VARIABLE QUE VA AHI)}*
+	a_div = i1 / i2,
+	b_div = i1 / 2_i,
+	c_div = 5_i / i2,
+	d_div = 5_i / 2_i,
+
+	e_div = u1 / u2,
+	f_div = u1 / 2_ul,
+	g_div = 5_ul / u2,
+	h_div = 5_ul / 2_ul,
+
+	i_div = d1 / d2,
+	j_div = d1 / 2.0,
+	k_div = 5.0 / d2,
+	l_div = 5.0 / 2.0,
+
+	*{TESTEO DE OPERACION ESPECIAL DE ASIGNACION -= PARA CADA TIPO DE VARIABLE}*
+	menos_igual_int -= 3_i,
+	menos_igual_ulong -= 3_ul,
+	menos_igual_double -= 3.0,
+}
+*{NOTA: EN CONCLUSION, LOS RESULTADOS QUE SE IMPRIMEN POR CADA VARIABLE DEBEN SER:
+i1:main = 5, i2:main = 2
+u1:main = 5, u2:main = 2
+d1:main = 5.0, d2:main = 2.0
+
+DE a_sum:main A h_sum:main (MITAD INT, MITAD ULONG) = 7
+DE i_sum:main a l_sum:main = 7.0
+
+DE a_res:main A h_res:main (MITAD INT, MITAD ULONG) = 3
+DE i_res:main a l_res:main = 3.0
+
+DE a_mul:main A h_mul:main (MITAD INT, MITAD ULONG) = 10
+DE i_mul:main a l_mul:main = 10.0
+
+DE a_div:main A h_div:main (MITAD INT, MITAD ULONG) = 2
+DE i_div:main a l_div:main = 2.5
+
+menos_igual_int:main = 5
+menos_igual_ulong:main = 5
+menos_igual_double:main = 5.0
+}*

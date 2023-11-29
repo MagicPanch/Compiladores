@@ -40,10 +40,18 @@
 
 	VOID funcion1 (ULONG parametro) {
 		RETURN,
-	},										*{Se deberia detectar para linea 41: "DECLARACION DE FUNCION"}*	
+	},
+
+	VOID funcionxd() {RETURN,},										*{Se deberia detectar para linea 41: "DECLARACION DE FUNCION"}*	
 	
+	INT n,
+
 	VOID funcion2 ()
 	{
+		INT funcionxd,
+		funcionxd(),
+		VOID n () {RETURN,},
+		n = 1_i,
 		double3 -= -5.3 + double1 * 1.,		*{Se deberia detectar para linea 45: "ASIGNACION USANDO OPERADOR DE MENOS IGUAL"}*
 		IF (double3 < double2) {
 			double2 = 1.2D+5,				*{Se deberia detectar para linea 47: "ASIGNACION USANDO OPERADOR DE IGUAL"}*

@@ -1,0 +1,30 @@
+{
+*{CODIGO DE TESTEO PARA EL ANALIZADOR SEMANTICO CON ERRORES DE EXPRESIONES ARITMETICAS Y ASIGNACIONES}*
+
+    CLASS c1 {},
+
+    INT i1,
+    ULONG u1,
+    DOUBLE d1,
+    c1 inst_c1,
+
+
+    i1 = 3_ul,          *{DEBERIA DETECTARSE: "ERROR: Asignacion invalida, no puede asignarse un ULONG a un INT"}*
+    i1 = 5_i,           *{Notar que no hay problema al hacer esta asignacion dado que ambos lados son de tipo INT}*
+    u1 = 3.5,           *{DEBERIA DETECTARSE: "ERROR: Asignacion invalida, no puede asignarse un DOUBLE a un ULONG"}*
+    u1 = 7_ul,          *{Notar que no hay problema al hacer esta asignacion dado que ambos lados son de tipo ULONG}*
+    d1 = 0_i,           *{DEBERIA DETECTARSE: "ERROR: Asignacion invalida, no puede asignarse un INT a un DOUBLE"}*
+    d1 = 9.2D+20,       *{Notar que no hay problema al hacer esta asignacion dado que ambos lados son de tipo DOUBLE}*
+
+    u1 = 5_ul / 3_ul * u1 - 7_ul / 8_ul,    *{Notar que no hay problema al hacer esta asignacion dado que todos los operandos de la expresion aritmetica de la derecha son ULONG, y la variable del lado izquierdo de la asignacion es ULONG tambien}*
+    i1 = 3_ul / i1 + d1,                    *{DEBERIA DETECTARSE: "ERROR: Operacion invalida, no puede efectuarse una division entre un ULONG y un INT". Luego se tiene que detectar: "ERROR: Operacion invalida, no puede efectuarse una suma entre un ULONG y un DOUBLE". Y finalmente: "ERROR: Asignacion invalida, no puede asignarse un ULONG a un INT". Esto ocurre porque lo primero que intenta hacer por la precedencia es la division entre 3_ul e i1 (ULONG e INT), y luego a eso (que se considera como ULONG porque el primer operando de la division es ULONG) se le intenta sumar d1 (ULONG y DOUBLE). Por ultimo, se quiere efectuar la asignacion, y dado que el lado derecho se marca como ULONG por el primer operando, seria un intento de asignacion de un ULONG a un INT}*
+    u1 -= 3_ul - 2_i,                       *{DEBERIA DETECTARSE: "ERROR: Operacion invalida, no puede efectuarse una resta entre un ULONG y un INT". Como el primer operando de la expresion aritmetica es ULONG, se guarda esta expresion como ULONG y por ende no hay otro error porque la variable del lado izquierdo de la asignacion tambien es ULONG (primero hay una resta implicita entre ambos y luego la asignacion pero ninguno de los dos trae problemas)}*
+    d1 = 0. + 15_i - i1,                    *{DEBERIA DETECTARSE: "ERROR: Operacion invalida, no puede efectuarse una suma entre un DOUBLE y un INT". Luego: "ERROR: Operacion invalida, no puede efectuarse una resta entre un DOUBLE y un INT". O sea primero da error la suma, se guarda como DOUBLE, da error la resta, se guarda como DOUBLE y finalmente no da error la asignacion ya que la expresion de la derecha figura como DOUBLE}*
+    i1 -= d1 * 20. + u1,                    *{DEBERIA DETECTARSE: "ERROR: Operacion invalida, no puede efectuarse una suma entre un DOUBLE y un ULONG". Y seguidamente: "ERROR: Operacion invalida, no puede efectuarse una resta entre un INT y un DOUBLE". Esto es porque por precedencia se hace primero la multiplicacion entre los dos operandos de tipo DOUBLE (que desde ya no da error semantico), y posteriormente se le quiere sumar a eso la variable u1 que es de tipo ULONG (lo que realmente genera el error). Luego, el otro error es porque se hace la resta implicita entre el i1 y la expresion aritmetica que se guarda como DOUBLE. Y no hay error para la asignacion ya que a su vez esa resta se guarda como INT porque el lado izquierdo de la resta implicita es la misma variable del lado izquierdo de la asignacion}*
+    inst_c1 = inst_c1,                      *{DEBERIA DETECTARSE: "ERROR: El tipo c1 no es valido como factor en una expresion aritmetica". Esto es porque inst_c1 no es una variable numerica. Seguidamente otro error de: "ERROR: Asignacion invalida, tanto el lado izquierdo como derecho deben ser de tipo numerico, pero se esta queriendo asignar un c1 (no numerico) a un c1 (no numerico)"}*                    
+    inst_c1 = 1_i,                          *{DEBERIA DETECTARSE: "ERROR: Asignacion invalida, tanto el lado izquierdo como derecho deben ser de tipo numerico, pero se esta queriendo asignar un INT a un c1 (no numerico)"}*
+    i1 = c1,                                *{DEBERIA DETECTARSE: "ERROR: Referencia invalida, no existe ninguna variable o atributo con nombre 'c1' al alcance". Esto se debe a que c1 es una clase y no una variable. Y seguidamente: "ERROR: El lado derecho contiene un elemento que no es una variable ni constante"}*
+}
+*{NOTA: AL FINAL DE LA COMPILACION, DEBE FIGURAR UN MENSAJE DE QUE EL PROGRAMA NO COMPILO CORRECTAMENTE. ADEMAS NO TIENE QUE GENERARSE EL ARBOL SINTACTICO Y POR
+CONSIGUIENTE TAMPOCO EL ASSEMBLER.
+}*      

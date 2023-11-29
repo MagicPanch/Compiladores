@@ -35,7 +35,7 @@ public class GeneradorAssembler {
             nodo.setNodoHijoIzquierdo(recorrer_y_Reemplazar(nodo.getNodoHijoIzquierdo()));;
             nodo.setNodoHijoDerecho(recorrer_y_Reemplazar(nodo.getNodoHijoDerecho()));
             nodo.setNodoHijoUnidireccional(recorrer_y_Reemplazar(nodo.getNodoHijoUnidireccional()));
-            System.out.println(nodo.getSimbolo());
+            //System.out.println(nodo.getSimbolo());
             if (nodo.getSimbolo().equals("PRINT") || nodo.getSimbolo().equals("ELSE") || nodo.getSimbolo().equals("CUERPO_FOR") || nodo.getSimbolo().equals("RETURN") || nodo.getSimbolo().equals("THEN") || nodo.getSimbolo().equals("PARAMETRO_REAL") || (nodo.getNodoHijoIzquierdo() != null || nodo.getNodoHijoDerecho() != null || nodo.getNodoHijoUnidireccional() != null)){
                 return generar_Codigo(nodo);
             } //ya que para la sentencia ejecutable del PRINT y para los nodos de control THEN, ELSE y CUERPO_FOR hay que efectuar ciertas acciones mas alla de que sus hijos sean todos null   
@@ -82,7 +82,7 @@ public class GeneradorAssembler {
                     String nombre_variable = key;
                     key = key.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                     archivo.write(key + " dd ?"+ System.lineSeparator());
-                    if (AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("nombre_variable") || AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("auxiliar") || AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("nombre_parametro_formal"))
+                    if (AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("nombre_variable") || AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("nombre_parametro_formal"))
                         archivo.write("_PRINT_" + key + " db \""+ nombre_variable + ": " + "\", 0"+ System.lineSeparator());
                 }
                 else if (AnalizadorLexico.simbolos.get(key).getTipo() != null && AnalizadorLexico.simbolos.get(key).getTipo().equals("DOUBLE") && AnalizadorLexico.simbolos.get(key).getUso() != null){
@@ -95,7 +95,7 @@ public class GeneradorAssembler {
                         String nombre_variable = key;
                         key = key.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                         archivo.write(key + " dq ?"+ System.lineSeparator());
-                        if (AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("nombre_variable") || AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("auxiliar") || AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("nombre_parametro_formal"))
+                        if (AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("nombre_variable") || AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("nombre_parametro_formal"))
                             archivo.write("_PRINT_" + key + " db \""+ nombre_variable + ":" + "\", 0"+ System.lineSeparator());
                     }
                 }
@@ -103,7 +103,7 @@ public class GeneradorAssembler {
                     String nombre_variable = key;
                     key = key.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                     archivo.write(key + " dw ?"+ System.lineSeparator());
-                    if (AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("nombre_variable") || AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("auxiliar") || AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("nombre_parametro_formal"))
+                    if (AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("nombre_variable") || AnalizadorLexico.simbolos.get(nombre_variable).getUso().equals("nombre_parametro_formal"))
                         archivo.write("_PRINT_" + key + " db \""+ nombre_variable + ":" + "\", 0"+ System.lineSeparator());
                 }
                 else if(AnalizadorLexico.simbolos.get(key).getTipo() != null && AnalizadorLexico.simbolos.get(key).getTipo().equals("PRINT")){
@@ -144,19 +144,19 @@ public class GeneradorAssembler {
             archivo.write("invoke printf, ADDR newline\n");
             for(String key : AnalizadorLexico.simbolos.keySet()){
                 if (AnalizadorLexico.simbolos.get(key).getTipo() != null && AnalizadorLexico.simbolos.get(key).getTipo().equals("ULONG") && AnalizadorLexico.simbolos.get(key).getUso() != null){
-                    if (AnalizadorLexico.simbolos.get(key).getUso().equals("nombre_variable") || AnalizadorLexico.simbolos.get(key).getUso().equals("auxiliar") || AnalizadorLexico.simbolos.get(key).getUso().equals("nombre_parametro_formal")) {
+                    if (AnalizadorLexico.simbolos.get(key).getUso().equals("nombre_variable") || AnalizadorLexico.simbolos.get(key).getUso().equals("nombre_parametro_formal")) {
                         key = key.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                         archivo.write("invoke printf,ADDR _PRINT_" + key + "\n" + "invoke printf,ADDR formatoUlong, " + key + "\n" + "invoke printf, ADDR newline\n");
                     }
                 }
                 else if (AnalizadorLexico.simbolos.get(key).getTipo() != null && AnalizadorLexico.simbolos.get(key).getTipo().equals("DOUBLE") && AnalizadorLexico.simbolos.get(key).getUso() != null){
-                    if (AnalizadorLexico.simbolos.get(key).getUso().equals("nombre_variable") || AnalizadorLexico.simbolos.get(key).getUso().equals("auxiliar") || AnalizadorLexico.simbolos.get(key).getUso().equals("nombre_parametro_formal")) {
+                    if (AnalizadorLexico.simbolos.get(key).getUso().equals("nombre_variable") || AnalizadorLexico.simbolos.get(key).getUso().equals("nombre_parametro_formal")) {
                         key = key.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                         archivo.write("invoke printf,ADDR _PRINT_" + key + "\n" + "invoke printf,ADDR formatoDouble, " + key + "\n" + "invoke printf, ADDR newline\n");
                     }
                 }
                 else if(AnalizadorLexico.simbolos.get(key).getTipo() != null && AnalizadorLexico.simbolos.get(key).getTipo().equals("INT") && AnalizadorLexico.simbolos.get(key).getUso() != null){
-                     if (AnalizadorLexico.simbolos.get(key).getUso().equals("nombre_variable") || AnalizadorLexico.simbolos.get(key).getUso().equals("auxiliar") || AnalizadorLexico.simbolos.get(key).getUso().equals("nombre_parametro_formal")) {
+                     if (AnalizadorLexico.simbolos.get(key).getUso().equals("nombre_variable") || AnalizadorLexico.simbolos.get(key).getUso().equals("nombre_parametro_formal")) {
                         key = key.replace(":","_").replace("(", "C").replace(")", "C").replace("[", "I").replace("]", "I").replace("<", "Z").replace(">", "Z").replace(".", "$");
                         archivo.write("invoke printf,ADDR _PRINT_" + key + "\n" + "invoke printf,ADDR formatoInt, " + key + "\n" + "invoke printf, ADDR newline\n");
                     }

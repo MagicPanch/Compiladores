@@ -5,6 +5,11 @@
     import analizadorSintactico.generadorCodigoIntermedio.GeneradorCodigoIntermedio;
     import analizadorSintactico.generadorCodigoIntermedio.Nodo;
     import Assembler.GeneradorAssembler;
+    import java.io.BufferedReader;
+    import java.io.BufferedWriter;
+    import java.io.FileReader;
+    import java.io.FileWriter;
+    import java.io.IOException;
 %}
 
 %token IF ELSE END_IF PRINT CLASS VOID INT ULONG DOUBLE FOR IN RANGE IMPL INTERFACE IMPLEMENT RETURN CONSTANTE_PF CONSTANTE_I CONSTANTE_UL CADENA_CARACTERES ID ASIGNADOR_MENOS_IGUAL COMP_MAYOR_IGUAL COMP_MENOR_IGUAL COMP_IGUAL COMP_DISTINTO
@@ -255,8 +260,8 @@ bloque_sentencias_ejecutables_de_return_completo:       '{' lista_sentencias_eje
 
 ;
 
-asignacion: referencia_resultado '=' expresion_aritmetica ','                         {System.out.print("(ASIGNACION USANDO OPERADOR DE IGUAL) "); analizador_semantico.registrarReferenciasLadoDerechoAsignacion($3.sval); analizador_semantico.chequearAsignacionValida($1.sval, $3.sval); $$.nodo = generador_codigo_intermedio.generarNodo("=", $1.nodo, $3.nodo);}
-		    | referencia_resultado ASIGNADOR_MENOS_IGUAL expresion_aritmetica ','     {System.out.print("(ASIGNACION USANDO OPERADOR DE MENOS IGUAL) "); analizador_semantico.registrarReferenciasLadoDerechoAsignacion($3.sval); analizador_semantico.chequearAsignacionValida($1.sval, $3.sval); $$.nodo = generador_codigo_intermedio.generarNodo("=", $1.nodo, obtenerNodoExpresion("-", generador_codigo_intermedio.generarNodo($1.sval, null, null), $3.nodo));}                  
+asignacion: referencia_resultado '=' expresion_aritmetica ','                         {System.out.print("(ASIGNACION USANDO OPERADOR DE IGUAL) "); analizador_semantico.registrarReferenciasLadoDerechoAsignacion($3.sval); analizador_semantico.chequearAsignacionValida($1.sval, $3.sval, false); $$.nodo = generador_codigo_intermedio.generarNodo("=", $1.nodo, $3.nodo);}
+		    | referencia_resultado ASIGNADOR_MENOS_IGUAL expresion_aritmetica ','     {System.out.print("(ASIGNACION USANDO OPERADOR DE MENOS IGUAL) "); analizador_semantico.registrarReferenciasLadoDerechoAsignacion($3.sval); analizador_semantico.chequearAsignacionValida($1.sval, $3.sval, true); $$.nodo = generador_codigo_intermedio.generarNodo("=", $1.nodo, obtenerNodoExpresion("-", generador_codigo_intermedio.generarNodo($1.sval, null, null), $3.nodo));}                  
 
 ;
 
@@ -499,10 +504,23 @@ public static void main (String [] args) {
                 System.out.println("        - El programa compilo correctamente -");
                 System.out.println("        -------------------------------------");
             }
-            analizador_lexico.imprimirTsYErrores();
             if (!AnalizadorLexico.hayErrores()) {
                 generador_codigo_intermedio.imprimirArbol();
                 generador_codigo_assembler.recorrer_y_Generar_Codigo(GeneradorCodigoIntermedio.nodo_programa, GeneradorCodigoIntermedio.funciones);
+            }
+            analizador_lexico.imprimirTsYErrores();
+            try (BufferedReader br = new BufferedReader(new FileReader(args[0]));
+            BufferedWriter bw = new BufferedWriter(new FileWriter("./Codigo_Testeo_Numerado.txt"))) {
+                String linea;
+                int numeroLinea = 1;
+                while ((linea = br.readLine()) != null) {
+                    bw.write("[" + numeroLinea + "]			" + linea);
+                    bw.newLine();
+                    numeroLinea++;
+                }
+            }
+            catch (IOException e) {
+                e.printStackTrace();
             }
 	}
 	else
@@ -540,21 +558,25 @@ Nodo obtenerNodoConstante(String constante, String tipo) { //permite obtener el 
     if (constante != null && tipo != null) {
         if (tipo.equals("INT")) {
             Nodo nodo_constante = generador_codigo_intermedio.generarNodo(constante, null, null);
-            if (nodo_constante != null)
+            if (nodo_constante != null) {
                 nodo_constante.setValorConstante(constante.replaceAll("_i", ""));
+                nodo_constante.setTipo(tipo);
+            }
             return nodo_constante;
         }
         else if (tipo.equals("ULONG")) {
             Nodo nodo_constante = generador_codigo_intermedio.generarNodo(constante, null, null);
-            if (nodo_constante != null)
+            if (nodo_constante != null) {
                 nodo_constante.setValorConstante(constante.replaceAll("_ul", ""));
+                nodo_constante.setTipo(tipo);
+            }
             return nodo_constante;
         }
-
         else if (tipo.equals("DOUBLE")) {
             Nodo nodo_constante = generador_codigo_intermedio.generarNodo(constante, null, null);
             if (nodo_constante != null) {
                 if (constante.contains("d")) nodo_constante.setValorConstante(constante.replaceAll("d", "E")); else if (constante.contains("D")) nodo_constante.setValorConstante(constante.replaceAll("D", "E")); else nodo_constante.setValorConstante(constante);
+                nodo_constante.setTipo(tipo);
             };
             return nodo_constante;
         }

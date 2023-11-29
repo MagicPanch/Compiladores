@@ -58,10 +58,10 @@ public class GeneradorCodigoIntermedio {
             System.out.print(nodo.getSimbolo());
             //if (nodo.getParametroFormalAsociado() != null)
             	//System.out.print("------" + nodo.getParametroFormalAsociado() + "------");
-            ArrayList<ParVariableAtributo> pares = nodo.getParesVariableAtributo();
-            if (pares != null)
-            	for (ParVariableAtributo par: pares)
-            		System.out.print(" " + par.getVariable() + "/" + par.getAtributo());
+            //ArrayList<ParVariableAtributo> pares = nodo.getParesVariableAtributo();
+            //if (pares != null)
+            	//for (ParVariableAtributo par: pares)
+            		//(System.out.print(" " + par.getVariable() + "/" + par.getAtributo());
             //if (nodo.getTipo() != null)
             	//System.out.print("------" + nodo.getTipo() + "------");
             //if (nodo.getValorConstante() != null)

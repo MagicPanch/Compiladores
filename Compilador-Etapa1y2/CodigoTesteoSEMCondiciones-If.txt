@@ -1,0 +1,33 @@
+{
+*{CODIGO DE TESTEO PARA EL ANALIZADOR SEMANTICO CON ERRORES DE CONDICIONES DEL IF. NO HAY ERRORES PROPIOS DEL IF (SON DE LA CONDICION), YA QUE DESDE EL PUNTO DE VISTA SEMANTICO NO HAY MUCHO QUE PUEDA OCURRIR RESPECTO A LOS MISMOS, Y LOS ERRORES SINTACTICOS YA FUERON ANALIZADOS ANTES}*
+
+    INT i1; i2,
+    ULONG u1; u2,
+    DOUBLE d1; d2,
+
+    IF (i1 == i2 - 10_i * 3_i)           *{Notar que la comparacion de este IF es valida por ser i1 y la expresion aritmetica i2 - 10_i * 3_i ambos de tipo INT}*
+        i1 = 1_i,
+    END_IF,
+
+    IF (i1 > d2)            *{DEBERIA DETECTARSE: "ERROR: Comparacion invalida, no puede compararse un INT con un DOUBLE". Esto es porque i1 es de tipo INT y d2 de tipo DOUBLE}*
+        i1 = 1_i,
+    END_IF,
+
+    IF (d1 <= 3.7)           *{Notar que este IF es valido por ser d1 y la constante 3.7 ambos de tipo DOUBLE}*
+        i1 = 1_i,
+    END_IF,
+
+    IF (u1 !! d1)           *{DEBERIA DETECTARSE: "ERROR: Comparacion invalida, no puede compararse un ULONG con un DOUBLE". Esto es porque u1 es de tipo ULONG y d1 de tipo DOUBLE}*
+        i1 = 1_i,
+    END_IF,
+
+    IF (u1 >= u2)           *{Notar que este IF es valido por ser u1 y u2 ambos de tipo ULONG}*
+        i1 = 1_i,
+    ELSE
+        IF (d2 !! i2)       *{DEBERIA DETECTARSE: "ERROR: Comparacion invalida, no puede compararse un DOUBLE con un INT". Esto es porque d2 es de tipo DOUBLE e i2 de tipo INT}*
+            i1 = 1_i,
+        END_IF,
+    END_IF,
+}
+*{NOTA: AL FINAL DE LA COMPILACION, DEBE FIGURAR UN MENSAJE DE QUE EL PROGRAMA NO COMPILO CORRECTAMENTE. ADEMAS NO TIENE QUE GENERARSE EL ARBOL SINTACTICO Y POR
+CONSIGUIENTE TAMPOCO EL ASSEMBLER.}*  

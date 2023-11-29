@@ -25,7 +25,12 @@ package analizadorSintactico;
     import analizadorSintactico.generadorCodigoIntermedio.GeneradorCodigoIntermedio;
     import analizadorSintactico.generadorCodigoIntermedio.Nodo;
     import Assembler.GeneradorAssembler;
-//#line 24 "Parser.java"
+    import java.io.BufferedReader;
+    import java.io.BufferedWriter;
+    import java.io.FileReader;
+    import java.io.FileWriter;
+    import java.io.IOException;
+//#line 29 "Parser.java"
 
 
 
@@ -873,7 +878,7 @@ final static String yyrule[] = {
 "control_rango_iteraciones : '(' error ')'",
 };
 
-//#line 422 "Gramatica.y"
+//#line 427 "Gramatica.y"
 
 static AnalizadorLexico analizador_lexico = null;
 static AnalizadorSemantico analizador_semantico = null;
@@ -954,10 +959,23 @@ public static void main (String [] args) {
                 System.out.println("        - El programa compilo correctamente -");
                 System.out.println("        -------------------------------------");
             }
-            analizador_lexico.imprimirTsYErrores();
             if (!AnalizadorLexico.hayErrores()) {
                 generador_codigo_intermedio.imprimirArbol();
                 generador_codigo_assembler.recorrer_y_Generar_Codigo(GeneradorCodigoIntermedio.nodo_programa, GeneradorCodigoIntermedio.funciones);
+            }
+            analizador_lexico.imprimirTsYErrores();
+            try (BufferedReader br = new BufferedReader(new FileReader(args[0]));
+            BufferedWriter bw = new BufferedWriter(new FileWriter("./Codigo_Testeo_Numerado.txt"))) {
+                String linea;
+                int numeroLinea = 1;
+                while ((linea = br.readLine()) != null) {
+                    bw.write("[" + numeroLinea + "]			" + linea);
+                    bw.newLine();
+                    numeroLinea++;
+                }
+            }
+            catch (IOException e) {
+                e.printStackTrace();
             }
 	}
 	else
@@ -995,21 +1013,25 @@ Nodo obtenerNodoConstante(String constante, String tipo) { //permite obtener el 
     if (constante != null && tipo != null) {
         if (tipo.equals("INT")) {
             Nodo nodo_constante = generador_codigo_intermedio.generarNodo(constante, null, null);
-            if (nodo_constante != null)
+            if (nodo_constante != null) {
                 nodo_constante.setValorConstante(constante.replaceAll("_i", ""));
+                nodo_constante.setTipo(tipo);
+            }
             return nodo_constante;
         }
         else if (tipo.equals("ULONG")) {
             Nodo nodo_constante = generador_codigo_intermedio.generarNodo(constante, null, null);
-            if (nodo_constante != null)
+            if (nodo_constante != null) {
                 nodo_constante.setValorConstante(constante.replaceAll("_ul", ""));
+                nodo_constante.setTipo(tipo);
+            }
             return nodo_constante;
         }
-
         else if (tipo.equals("DOUBLE")) {
             Nodo nodo_constante = generador_codigo_intermedio.generarNodo(constante, null, null);
             if (nodo_constante != null) {
                 if (constante.contains("d")) nodo_constante.setValorConstante(constante.replaceAll("d", "E")); else if (constante.contains("D")) nodo_constante.setValorConstante(constante.replaceAll("D", "E")); else nodo_constante.setValorConstante(constante);
+                nodo_constante.setTipo(tipo);
             };
             return nodo_constante;
         }
@@ -1030,7 +1052,7 @@ Nodo obtenerNodoExpresion(String operador, Nodo operando_1, Nodo operando_2) { /
 }
 
 
-//#line 960 "Parser.java"
+//#line 982 "Parser.java"
 //###############################################################
 // method: yylexdebug : check lexer state
 //###############################################################
@@ -1185,730 +1207,730 @@ boolean doaction;
       {
 //########## USER-SUPPLIED ACTIONS ##########
 case 1:
-//#line 15 "Gramatica.y"
+//#line 20 "Gramatica.y"
 {System.out.print("(PROGRAMA) "); analizador_semantico.actualizarAmbitoActual("-"); analizador_semantico.verificarReferenciasVariablesEnAsignaciones(); yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("PROGRAMA", val_peek(0).nodo); GeneradorCodigoIntermedio.nodo_programa = yyval.nodo;}
 break;
 case 2:
-//#line 16 "Gramatica.y"
+//#line 21 "Gramatica.y"
 {System.out.print("(PROGRAMA_VACIO) "); yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("PROGRAMA_VACIO", null); GeneradorCodigoIntermedio.nodo_programa = yyval.nodo;}
 break;
 case 3:
-//#line 17 "Gramatica.y"
+//#line 22 "Gramatica.y"
 {System.out.print("(PROGRAMA) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); analizador_semantico.verificarReferenciasVariablesEnAsignaciones(); yyval.nodo = null;}
 break;
 case 4:
-//#line 18 "Gramatica.y"
+//#line 23 "Gramatica.y"
 {System.out.print("(PROGRAMA_VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); yyval.nodo = null;}
 break;
 case 5:
-//#line 19 "Gramatica.y"
+//#line 24 "Gramatica.y"
 {System.out.print("(PROGRAMA_VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); yyval.nodo = null;}
 break;
 case 6:
-//#line 20 "Gramatica.y"
+//#line 25 "Gramatica.y"
 {System.out.print("(PROGRAMA) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); analizador_semantico.verificarReferenciasVariablesEnAsignaciones(); yyval.nodo = null;}
 break;
 case 7:
-//#line 21 "Gramatica.y"
+//#line 26 "Gramatica.y"
 {System.out.print("(PROGRAMA_VACIO) "); agregarError("ERROR: Solo puede haber sentencias dentro de las llaves del programa"); analizador_semantico.actualizarAmbitoActual("-"); yyval.nodo = null;}
 break;
 case 8:
-//#line 25 "Gramatica.y"
+//#line 30 "Gramatica.y"
 {yyval.nodo = val_peek(1).nodo;}
 break;
 case 9:
-//#line 26 "Gramatica.y"
+//#line 31 "Gramatica.y"
 {agregarError("ERROR: Bloque de sentencias de programa invalido, el formato correcto es: '{' lista_sentencias '}' con cada sentencia delimitada por ','"); yyval.nodo = val_peek(1).nodo;}
 break;
 case 10:
-//#line 30 "Gramatica.y"
+//#line 35 "Gramatica.y"
 {if (val_peek(0).nodo != null) {if (val_peek(1).nodo != null) yyval.nodo = generador_codigo_intermedio.generarNodo("BLOQUE", val_peek(1).nodo, val_peek(0).nodo); else yyval.nodo = val_peek(0).nodo;} else yyval.nodo = val_peek(1).nodo;}
 break;
 case 11:
-//#line 31 "Gramatica.y"
+//#line 36 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
 case 12:
-//#line 32 "Gramatica.y"
+//#line 37 "Gramatica.y"
 {agregarError("ERROR: El programa principal no puede contener de manera directa sentencias que impliquen posibles retornos"); yyval.nodo = null;}
 break;
 case 13:
-//#line 33 "Gramatica.y"
+//#line 38 "Gramatica.y"
 {agregarError("ERROR: El programa principal no puede contener de manera directa sentencias que impliquen retornos"); yyval.nodo = null;}
 break;
 case 14:
-//#line 37 "Gramatica.y"
+//#line 42 "Gramatica.y"
 {yyval.nodo = null;}
 break;
 case 15:
-//#line 38 "Gramatica.y"
+//#line 43 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
 case 16:
-//#line 39 "Gramatica.y"
+//#line 44 "Gramatica.y"
 {agregarError("ERROR: Sentencia invalida sintacticamente");}
 break;
 case 18:
-//#line 44 "Gramatica.y"
+//#line 49 "Gramatica.y"
 {agregarError("ERROR: Bloque de sentencias declarativas invalido, el formato correcto es: '{' lista_sentencias_declarativas '}' con cada sentencia delimitada por ','");}
 break;
 case 19:
-//#line 45 "Gramatica.y"
+//#line 50 "Gramatica.y"
 {agregarError("ERROR: Bloque de sentencias declarativas invalido, el formato correcto es: '{' lista_sentencias_declarativas '}' con cada sentencia delimitada por ','");}
 break;
 case 22:
-//#line 51 "Gramatica.y"
-{agregarError("ERROR: No puede haber sentencias ejecutables, en este bloque solo se aceptan sentencias declarativas");}
-break;
-case 23:
-//#line 52 "Gramatica.y"
-{agregarError("ERROR: No puede haber sentencias ejecutables, en este bloque solo se aceptan sentencias declarativas");}
-break;
-case 24:
-//#line 53 "Gramatica.y"
-{agregarError("ERROR: No puede haber sentencias ejecutables, en este bloque solo se aceptan sentencias declarativas");}
-break;
-case 25:
-//#line 54 "Gramatica.y"
-{agregarError("ERROR: No puede haber sentencias ejecutables, en este bloque solo se aceptan sentencias declarativas");}
-break;
-case 26:
-//#line 55 "Gramatica.y"
-{agregarError("ERROR: No puede haber sentencias ejecutables, en este bloque solo se aceptan sentencias declarativas");}
-break;
-case 27:
 //#line 56 "Gramatica.y"
 {agregarError("ERROR: No puede haber sentencias ejecutables, en este bloque solo se aceptan sentencias declarativas");}
 break;
+case 23:
+//#line 57 "Gramatica.y"
+{agregarError("ERROR: No puede haber sentencias ejecutables, en este bloque solo se aceptan sentencias declarativas");}
+break;
+case 24:
+//#line 58 "Gramatica.y"
+{agregarError("ERROR: No puede haber sentencias ejecutables, en este bloque solo se aceptan sentencias declarativas");}
+break;
+case 25:
+//#line 59 "Gramatica.y"
+{agregarError("ERROR: No puede haber sentencias ejecutables, en este bloque solo se aceptan sentencias declarativas");}
+break;
+case 26:
+//#line 60 "Gramatica.y"
+{agregarError("ERROR: No puede haber sentencias ejecutables, en este bloque solo se aceptan sentencias declarativas");}
+break;
+case 27:
+//#line 61 "Gramatica.y"
+{agregarError("ERROR: No puede haber sentencias ejecutables, en este bloque solo se aceptan sentencias declarativas");}
+break;
 case 34:
-//#line 68 "Gramatica.y"
+//#line 73 "Gramatica.y"
 {System.out.print("(DECLARACION DE LISTA DE VARIABLES NUMERICAS) "); analizador_semantico.registrarTipoID(val_peek(2).sval, val_peek(1).sval);}
 break;
 case 35:
-//#line 69 "Gramatica.y"
+//#line 74 "Gramatica.y"
 {System.out.print("(DECLARACION DE LISTA DE VARIABLES DEL TIPO DE UNA CLASE) "); analizador_semantico.eliminarEntradaOriginalID(val_peek(2).sval); analizador_semantico.registrarTipoID(val_peek(2).sval, val_peek(1).sval);}
 break;
 case 36:
-//#line 73 "Gramatica.y"
+//#line 78 "Gramatica.y"
 {yyval.sval = "INT";}
 break;
 case 37:
-//#line 74 "Gramatica.y"
+//#line 79 "Gramatica.y"
 {yyval.sval = "ULONG";}
 break;
 case 38:
-//#line 75 "Gramatica.y"
+//#line 80 "Gramatica.y"
 {yyval.sval = "DOUBLE";}
 break;
 case 39:
-//#line 79 "Gramatica.y"
+//#line 84 "Gramatica.y"
 {analizador_semantico.registrarAmbitoUsoID(val_peek(0).sval, "nombre_variable"); yyval.sval = val_peek(2).sval + ";" + val_peek(0).sval;}
 break;
 case 40:
-//#line 80 "Gramatica.y"
+//#line 85 "Gramatica.y"
 {analizador_semantico.registrarAmbitoUsoID(val_peek(0).sval, "nombre_variable"); yyval.sval = val_peek(0).sval;}
 break;
 case 41:
-//#line 81 "Gramatica.y"
+//#line 86 "Gramatica.y"
 {agregarError("ERROR: Declaracion invalida de variable en lista de variables, falta el ';'"); analizador_semantico.registrarAmbitoUsoID(val_peek(0).sval, "nombre_variable"); yyval.sval = val_peek(1).sval + ";" + val_peek(0).sval;}
 break;
 case 42:
-//#line 85 "Gramatica.y"
+//#line 90 "Gramatica.y"
 {System.out.print("(DECLARACION DE REFERENCIA A CLASE) "); analizador_semantico.registrarAmbitoUsoID(val_peek(1).sval, "referencia_clase");}
 break;
 case 46:
-//#line 95 "Gramatica.y"
+//#line 100 "Gramatica.y"
 {agregarError("ERROR: Bloque de declaraciones de prototipos invalido, el formato correcto es: '{' lista_declaraciones_prototipos '}' con cada prototipo delimitado por ','");}
 break;
 case 47:
-//#line 96 "Gramatica.y"
+//#line 101 "Gramatica.y"
 {agregarError("ERROR: Bloque de declaraciones de prototipos invalido, el formato correcto es: '{' lista_declaraciones_prototipos '}' con cada prototipo delimitado por ','");}
 break;
 case 50:
-//#line 105 "Gramatica.y"
+//#line 110 "Gramatica.y"
 {System.out.print("(DECLARACION DE PROTOTIPO DE FUNCION) "); analizador_semantico.verificarPosibleImplementacionFuncionInterfaz(val_peek(2).sval); analizador_semantico.actualizarAmbitoActual("-"); analizador_semantico.definirUsoPrototipo(val_peek(2).sval); analizador_semantico.verificarCantidadAnidamientos(val_peek(2).sval);}
 break;
 case 51:
-//#line 109 "Gramatica.y"
+//#line 114 "Gramatica.y"
 {analizador_semantico.registrarAmbitoUsoID(val_peek(0).sval, "nombre_funcion"); analizador_semantico.actualizarAmbitoActual(val_peek(0).sval); yyval.sval = val_peek(0).sval;}
 break;
 case 52:
-//#line 110 "Gramatica.y"
+//#line 115 "Gramatica.y"
 {agregarError("ERROR: Encabezado de funcion invalido, el formato correcto es: VOID ID"); analizador_semantico.marcarAmbitoInvalido(":"); yyval.sval = null;}
 break;
 case 53:
-//#line 114 "Gramatica.y"
+//#line 119 "Gramatica.y"
 {analizador_semantico.registrarAmbitoUsoID(val_peek(1).sval, "nombre_parametro_formal"); analizador_semantico.eliminarEntradaOriginalID(val_peek(1).sval); analizador_semantico.registrarTipoID(val_peek(2).sval, val_peek(1).sval); analizador_semantico.chequearParametroFuncionIMPL(val_peek(1).sval, val_peek(2).sval); yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("PARAMETRO_FORMAL", generador_codigo_intermedio.generarNodo(analizador_semantico.obtenerLexemaCompletoID(val_peek(1).sval), null, null));}
 break;
 case 54:
-//#line 115 "Gramatica.y"
+//#line 120 "Gramatica.y"
 {analizador_semantico.chequearParametroFuncionIMPL(null, null); yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("PARAMETRO_FORMAL", null);}
 break;
 case 55:
-//#line 116 "Gramatica.y"
+//#line 121 "Gramatica.y"
 {agregarError("ERROR: Parametro invalido, el formato correcto es: '(' tipo_numerico ID ')' o '(' ')'"); analizador_semantico.registrarAmbitoUsoID(val_peek(1).sval, "nombre_parametro_formal"); analizador_semantico.eliminarEntradaOriginalID(val_peek(1).sval); analizador_semantico.registrarTipoID(val_peek(2).sval, val_peek(1).sval); analizador_semantico.chequearParametroFuncionIMPL(val_peek(1).sval, val_peek(2).sval); yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("PARAMETRO_FORMAL", generador_codigo_intermedio.generarNodo(analizador_semantico.obtenerLexemaCompletoID(val_peek(1).sval), null, null));}
 break;
 case 56:
-//#line 117 "Gramatica.y"
+//#line 122 "Gramatica.y"
 {agregarError("ERROR: Parametro invalido, el formato correcto es: '(' tipo_numerico ID ')' o '(' ')'"); analizador_semantico.registrarAmbitoUsoID(val_peek(0).sval, "nombre_parametro_formal"); analizador_semantico.eliminarEntradaOriginalID(val_peek(0).sval); analizador_semantico.registrarTipoID(val_peek(1).sval, val_peek(0).sval); analizador_semantico.chequearParametroFuncionIMPL(val_peek(0).sval, val_peek(1).sval); yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("PARAMETRO_FORMAL", generador_codigo_intermedio.generarNodo(analizador_semantico.obtenerLexemaCompletoID(val_peek(0).sval), null, null));}
 break;
 case 57:
-//#line 118 "Gramatica.y"
+//#line 123 "Gramatica.y"
 {agregarError("ERROR: Parametro invalido, el formato correcto es: '(' tipo_numerico ID ')' o '(' ')'"); analizador_semantico.actualizarAmbitoActual("-") ; analizador_semantico.marcarAmbitoInvalido(":"); analizador_semantico.chequearParametroFuncionIMPL(null, null); yyval.nodo = null;}
 break;
 case 59:
-//#line 123 "Gramatica.y"
+//#line 128 "Gramatica.y"
 {agregarError("ERROR: Bloque de declaraciones de funciones invalido, el formato correcto es: '{' lista_declaraciones_funciones '}' con cada funcion delimitada por ','");}
 break;
 case 60:
-//#line 124 "Gramatica.y"
+//#line 129 "Gramatica.y"
 {agregarError("ERROR: Bloque de declaraciones de funciones invalido, el formato correcto es: '{' lista_declaraciones_funciones '}' con cada funcion delimitada por ','");}
 break;
 case 63:
-//#line 133 "Gramatica.y"
+//#line 138 "Gramatica.y"
 {System.out.print("(DECLARACION DE FUNCION) "); analizador_semantico.verificarPosibleImplementacionFuncionInterfaz(val_peek(3).sval); analizador_semantico.actualizarAmbitoActual("-"); analizador_semantico.verificarCantidadAnidamientos(val_peek(3).sval); yyval.nodo = generador_codigo_intermedio.generarNodo(analizador_semantico.obtenerLexemaCompletoID(val_peek(3).sval), val_peek(2).nodo, val_peek(1).nodo); GeneradorCodigoIntermedio.funciones.add(yyval.nodo);}
 break;
 case 64:
-//#line 137 "Gramatica.y"
+//#line 142 "Gramatica.y"
 {yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("CUERPO_FUNCION", generador_codigo_intermedio.generarNodo("BLOQUE", val_peek(2).nodo, val_peek(1).nodo));}
 break;
 case 65:
-//#line 138 "Gramatica.y"
+//#line 143 "Gramatica.y"
 {yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("CUERPO_FUNCION", val_peek(1).nodo);}
 break;
 case 66:
-//#line 139 "Gramatica.y"
+//#line 144 "Gramatica.y"
 {agregarError("ERROR: Cuerpo de funcion sin llave de apertura"); yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("CUERPO_FUNCION", val_peek(1).nodo);}
 break;
 case 67:
-//#line 140 "Gramatica.y"
+//#line 145 "Gramatica.y"
 {agregarError("ERROR: Cuerpo de funcion sin llave de cierre"); yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("CUERPO_FUNCION", val_peek(0).nodo);}
 break;
 case 68:
-//#line 141 "Gramatica.y"
+//#line 146 "Gramatica.y"
 {agregarError("ERROR: Cuerpo de funcion sin llave de cierre"); yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("CUERPO_FUNCION", generador_codigo_intermedio.generarNodo("BLOQUE", val_peek(1).nodo, val_peek(0).nodo));}
 break;
 case 69:
-//#line 142 "Gramatica.y"
+//#line 147 "Gramatica.y"
 {agregarError("ERROR: Cuerpo de funcion sin llave de apertura y no se garantiza retorno para todas las ramas del mismo"); yyval.nodo = null;}
 break;
 case 70:
-//#line 143 "Gramatica.y"
+//#line 148 "Gramatica.y"
 {agregarError("ERROR: Cuerpo de funcion sin llave de apertura"); yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("CUERPO_FUNCION", generador_codigo_intermedio.generarNodo("BLOQUE", val_peek(2).nodo, val_peek(1).nodo));}
 break;
 case 71:
-//#line 144 "Gramatica.y"
+//#line 149 "Gramatica.y"
 {agregarError("ERROR: No se garantiza retorno para todas las ramas del cuerpo de funcion"); yyval.nodo = null;}
 break;
 case 72:
-//#line 145 "Gramatica.y"
+//#line 150 "Gramatica.y"
 {agregarError("ERROR: Cuerpo de funcion sin retorno"); yyval.nodo = null;}
 break;
 case 73:
-//#line 149 "Gramatica.y"
+//#line 154 "Gramatica.y"
 {if (val_peek(0).nodo != null) {if (val_peek(1).nodo != null) yyval.nodo = generador_codigo_intermedio.generarNodo("BLOQUE", val_peek(1).nodo, val_peek(0).nodo); else yyval.nodo = val_peek(0).nodo;} else yyval.nodo = val_peek(1).nodo;}
 break;
 case 74:
-//#line 150 "Gramatica.y"
+//#line 155 "Gramatica.y"
 {if (val_peek(1).nodo != null) yyval.nodo = generador_codigo_intermedio.generarNodo("BLOQUE", val_peek(1).nodo, val_peek(0).nodo); else yyval.nodo = val_peek(0).nodo;}
 break;
 case 75:
-//#line 151 "Gramatica.y"
+//#line 156 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
 case 76:
-//#line 152 "Gramatica.y"
+//#line 157 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
 case 77:
-//#line 156 "Gramatica.y"
+//#line 161 "Gramatica.y"
 {System.out.print("(DECLARACION DE CLASE) "); analizador_semantico.chequearImplementacionTotalInterfaz(val_peek(1).sval); analizador_semantico.actualizarAmbitoActual("()");}
 break;
 case 78:
-//#line 160 "Gramatica.y"
+//#line 165 "Gramatica.y"
 {analizador_semantico.registrarAmbitoUsoID(val_peek(0).sval, "nombre_clase"); analizador_semantico.actualizarAmbitoActual("(" + val_peek(0).sval + ")"); yyval.sval = val_peek(0).sval;}
 break;
 case 79:
-//#line 161 "Gramatica.y"
+//#line 166 "Gramatica.y"
 {analizador_semantico.registrarAmbitoUsoID(val_peek(2).sval, "nombre_clase"); analizador_semantico.registrarInterfazImplementada(val_peek(2).sval, val_peek(0).sval); analizador_semantico.actualizarAmbitoActual("(" + val_peek(2).sval + ")"); analizador_semantico.eliminarEntradaOriginalID(val_peek(0).sval); yyval.sval = val_peek(2).sval;}
 break;
 case 80:
-//#line 162 "Gramatica.y"
+//#line 167 "Gramatica.y"
 {agregarError("ERROR: Encabezado de clase invalido, los formatos correctos son: CLASS ID y CLASS ID IMPLEMENT ID"); analizador_semantico.marcarAmbitoInvalido("()"); yyval.sval = null;}
 break;
 case 81:
-//#line 163 "Gramatica.y"
+//#line 168 "Gramatica.y"
 {agregarError("ERROR: Encabezado de clase invalido, los formatos correctos son: CLASS ID y CLASS ID IMPLEMENT ID"); analizador_semantico.marcarAmbitoInvalido("()"); yyval.sval = null;}
 break;
 case 82:
-//#line 164 "Gramatica.y"
+//#line 169 "Gramatica.y"
 {agregarError("ERROR: Encabezado de clase invalido, los formatos correctos son: CLASS ID y CLASS ID IMPLEMENT ID"); analizador_semantico.registrarAmbitoUsoID(val_peek(2).sval, "nombre_clase"); analizador_semantico.actualizarAmbitoActual("(" + val_peek(2).sval + ")"); yyval.sval = val_peek(2).sval;}
 break;
 case 83:
-//#line 165 "Gramatica.y"
+//#line 170 "Gramatica.y"
 {agregarError("ERROR: Encabezado de clase invalido, los formatos correctos son: CLASS ID y CLASS ID IMPLEMENT ID"); analizador_semantico.eliminarEntradaOriginalID(val_peek(1).sval); analizador_semantico.marcarAmbitoInvalido("()"); yyval.sval = null;}
 break;
 case 86:
-//#line 174 "Gramatica.y"
+//#line 179 "Gramatica.y"
 {System.out.print("(DECLARACION DE CLAUSULA IMPL) "); analizador_semantico.actualizarAmbitoActual("<>");}
 break;
 case 87:
-//#line 178 "Gramatica.y"
+//#line 183 "Gramatica.y"
 {analizador_semantico.eliminarEntradaOriginalID(val_peek(1).sval); analizador_semantico.chequearValidezClausulaIMPL(val_peek(1).sval); analizador_semantico.actualizarAmbitoActual("<" + val_peek(1).sval + ">");}
 break;
 case 88:
-//#line 179 "Gramatica.y"
+//#line 184 "Gramatica.y"
 {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'"); analizador_semantico.marcarAmbitoInvalido("<>");}
 break;
 case 89:
-//#line 180 "Gramatica.y"
+//#line 185 "Gramatica.y"
 {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'"); analizador_semantico.eliminarEntradaOriginalID(val_peek(2).sval); analizador_semantico.chequearValidezClausulaIMPL(val_peek(2).sval); analizador_semantico.actualizarAmbitoActual("<" + val_peek(2).sval + ">");}
 break;
 case 90:
-//#line 181 "Gramatica.y"
+//#line 186 "Gramatica.y"
 {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'"); analizador_semantico.marcarAmbitoInvalido("<>");}
 break;
 case 91:
-//#line 182 "Gramatica.y"
+//#line 187 "Gramatica.y"
 {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'"); analizador_semantico.eliminarEntradaOriginalID(val_peek(1).sval); analizador_semantico.chequearValidezClausulaIMPL(val_peek(1).sval); analizador_semantico.actualizarAmbitoActual("<" + val_peek(1).sval + ">");}
 break;
 case 92:
-//#line 183 "Gramatica.y"
+//#line 188 "Gramatica.y"
 {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'"); analizador_semantico.marcarAmbitoInvalido("<>");}
 break;
 case 93:
-//#line 184 "Gramatica.y"
+//#line 189 "Gramatica.y"
 {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'"); analizador_semantico.eliminarEntradaOriginalID(val_peek(1).sval); analizador_semantico.chequearValidezClausulaIMPL(val_peek(1).sval); analizador_semantico.actualizarAmbitoActual("<" + val_peek(1).sval + ">");}
 break;
 case 94:
-//#line 185 "Gramatica.y"
+//#line 190 "Gramatica.y"
 {agregarError("ERROR: Encabezado de clausula IMPL invalido, el formato correcto es: IMPL FOR ID ':'"); analizador_semantico.marcarAmbitoInvalido("<>");}
 break;
 case 97:
-//#line 194 "Gramatica.y"
+//#line 199 "Gramatica.y"
 {System.out.print("(DECLARACION DE INTERFAZ) "); analizador_semantico.registrarCantidadPrototiposInterfaz(val_peek(1).sval); analizador_semantico.actualizarAmbitoActual("[]");}
 break;
 case 98:
-//#line 198 "Gramatica.y"
+//#line 203 "Gramatica.y"
 {analizador_semantico.registrarAmbitoUsoID(val_peek(0).sval, "nombre_interfaz"); analizador_semantico.actualizarAmbitoActual("[" + val_peek(0).sval + "]"); yyval.sval = val_peek(0).sval;}
 break;
 case 99:
-//#line 199 "Gramatica.y"
+//#line 204 "Gramatica.y"
 {agregarError("ERROR: Encabezado de interfaz invalido, el formato correcto es: INTERFACE ID"); analizador_semantico.marcarAmbitoInvalido("[]"); yyval.sval = null;}
 break;
 case 102:
-//#line 208 "Gramatica.y"
+//#line 213 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
 case 103:
-//#line 209 "Gramatica.y"
+//#line 214 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
 case 104:
-//#line 210 "Gramatica.y"
+//#line 215 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
 case 105:
-//#line 211 "Gramatica.y"
-{yyval.nodo = val_peek(0).nodo;}
-break;
-case 106:
-//#line 212 "Gramatica.y"
-{yyval.nodo = val_peek(0).nodo;}
-break;
-case 107:
 //#line 216 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
-case 108:
+case 106:
 //#line 217 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
-case 109:
+case 107:
 //#line 221 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
-case 110:
+case 108:
 //#line 222 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
-case 111:
+case 109:
 //#line 226 "Gramatica.y"
+{yyval.nodo = val_peek(0).nodo;}
+break;
+case 110:
+//#line 227 "Gramatica.y"
+{yyval.nodo = val_peek(0).nodo;}
+break;
+case 111:
+//#line 231 "Gramatica.y"
 {yyval.nodo = generador_codigo_intermedio.generarNodo("RETURN", null, null);}
 break;
 case 112:
-//#line 230 "Gramatica.y"
+//#line 235 "Gramatica.y"
 {yyval.nodo = val_peek(1).nodo;}
 break;
 case 113:
-//#line 234 "Gramatica.y"
+//#line 239 "Gramatica.y"
 {yyval.nodo = generador_codigo_intermedio.generarNodo("BLOQUE", val_peek(1).nodo, val_peek(0).nodo);}
 break;
 case 114:
-//#line 235 "Gramatica.y"
+//#line 240 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
 case 115:
-//#line 236 "Gramatica.y"
+//#line 241 "Gramatica.y"
 {agregarError("ERROR: No puede haber sentencias declarativas, en este bloque solo se aceptan sentencias ejecutables"); yyval.nodo = null;}
 break;
 case 116:
-//#line 237 "Gramatica.y"
+//#line 242 "Gramatica.y"
 {agregarError("ERROR: No puede haber sentencias declarativas, en este bloque solo se aceptan sentencias ejecutables"); yyval.nodo = null;}
 break;
 case 117:
-//#line 241 "Gramatica.y"
+//#line 246 "Gramatica.y"
 {yyval.nodo = val_peek(1).nodo;}
 break;
 case 118:
-//#line 245 "Gramatica.y"
+//#line 250 "Gramatica.y"
 {yyval.nodo = generador_codigo_intermedio.generarNodo("BLOQUE", val_peek(1).nodo, val_peek(0).nodo);}
 break;
 case 119:
-//#line 246 "Gramatica.y"
+//#line 251 "Gramatica.y"
 {yyval.nodo = generador_codigo_intermedio.generarNodo("BLOQUE", val_peek(1).nodo, val_peek(0).nodo);}
 break;
 case 120:
-//#line 247 "Gramatica.y"
+//#line 252 "Gramatica.y"
 {yyval.nodo = generador_codigo_intermedio.generarNodo("BLOQUE", val_peek(1).nodo, val_peek(0).nodo);}
 break;
 case 121:
-//#line 248 "Gramatica.y"
+//#line 253 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
 case 122:
-//#line 252 "Gramatica.y"
+//#line 257 "Gramatica.y"
 {yyval.nodo = generador_codigo_intermedio.generarNodo("BLOQUE", val_peek(2).nodo, val_peek(1).nodo);}
 break;
 case 123:
-//#line 253 "Gramatica.y"
+//#line 258 "Gramatica.y"
 {yyval.nodo = generador_codigo_intermedio.generarNodo("BLOQUE", val_peek(2).nodo, val_peek(1).nodo);}
 break;
 case 124:
-//#line 254 "Gramatica.y"
+//#line 259 "Gramatica.y"
 {yyval.nodo = val_peek(1).nodo;}
 break;
 case 125:
-//#line 258 "Gramatica.y"
-{System.out.print("(ASIGNACION USANDO OPERADOR DE IGUAL) "); analizador_semantico.registrarReferenciasLadoDerechoAsignacion(val_peek(1).sval); analizador_semantico.chequearAsignacionValida(val_peek(3).sval, val_peek(1).sval); yyval.nodo = generador_codigo_intermedio.generarNodo("=", val_peek(3).nodo, val_peek(1).nodo);}
+//#line 263 "Gramatica.y"
+{System.out.print("(ASIGNACION USANDO OPERADOR DE IGUAL) "); analizador_semantico.registrarReferenciasLadoDerechoAsignacion(val_peek(1).sval); analizador_semantico.chequearAsignacionValida(val_peek(3).sval, val_peek(1).sval, false); yyval.nodo = generador_codigo_intermedio.generarNodo("=", val_peek(3).nodo, val_peek(1).nodo);}
 break;
 case 126:
-//#line 259 "Gramatica.y"
-{System.out.print("(ASIGNACION USANDO OPERADOR DE MENOS IGUAL) "); analizador_semantico.registrarReferenciasLadoDerechoAsignacion(val_peek(1).sval); analizador_semantico.chequearAsignacionValida(val_peek(3).sval, val_peek(1).sval); yyval.nodo = generador_codigo_intermedio.generarNodo("=", val_peek(3).nodo, obtenerNodoExpresion("-", generador_codigo_intermedio.generarNodo(val_peek(3).sval, null, null), val_peek(1).nodo));}
+//#line 264 "Gramatica.y"
+{System.out.print("(ASIGNACION USANDO OPERADOR DE MENOS IGUAL) "); analizador_semantico.registrarReferenciasLadoDerechoAsignacion(val_peek(1).sval); analizador_semantico.chequearAsignacionValida(val_peek(3).sval, val_peek(1).sval, true); yyval.nodo = generador_codigo_intermedio.generarNodo("=", val_peek(3).nodo, obtenerNodoExpresion("-", generador_codigo_intermedio.generarNodo(val_peek(3).sval, null, null), val_peek(1).nodo));}
 break;
 case 127:
-//#line 263 "Gramatica.y"
+//#line 268 "Gramatica.y"
 {yyval.sval = val_peek(2).sval + " " + "+" + " " + val_peek(0).sval; analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, false, true); yyval.nodo = obtenerNodoExpresion("+", val_peek(2).nodo, val_peek(0).nodo);}
 break;
 case 128:
-//#line 264 "Gramatica.y"
+//#line 269 "Gramatica.y"
 {yyval.sval = val_peek(2).sval + " " + "-" + " " + val_peek(0).sval; analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, false, false); yyval.nodo = obtenerNodoExpresion("-", val_peek(2).nodo, val_peek(0).nodo);}
 break;
 case 129:
-//#line 265 "Gramatica.y"
+//#line 270 "Gramatica.y"
 {yyval.sval = val_peek(0).sval; yyval.nodo = val_peek(0).nodo;}
 break;
 case 130:
-//#line 269 "Gramatica.y"
+//#line 274 "Gramatica.y"
 {yyval.sval = val_peek(2).sval + " " + "*" + " " + val_peek(0).sval; analizador_semantico.chequearValidezOperacionTerminoFactor(val_peek(2).sval, val_peek(0).sval, true); yyval.nodo = obtenerNodoExpresion("*", val_peek(2).nodo, val_peek(0).nodo);}
 break;
 case 131:
-//#line 270 "Gramatica.y"
+//#line 275 "Gramatica.y"
 {yyval.sval = val_peek(2).sval + " " + "/" + " " + val_peek(0).sval; analizador_semantico.chequearValidezOperacionTerminoFactor(val_peek(2).sval, val_peek(0).sval, false); yyval.nodo = obtenerNodoExpresion("/", val_peek(2).nodo, val_peek(0).nodo);}
 break;
 case 132:
-//#line 271 "Gramatica.y"
+//#line 276 "Gramatica.y"
 {yyval.sval = val_peek(0).sval; yyval.nodo = val_peek(0).nodo; if (yyval.nodo != null && val_peek(0).sval != null) yyval.nodo.setTipo(AnalizadorLexico.simbolos.get(val_peek(0).sval).getTipo());}
 break;
 case 133:
-//#line 275 "Gramatica.y"
+//#line 280 "Gramatica.y"
 {yyval.sval = analizador_semantico.verificarReferenciaValida(val_peek(0).sval, false); analizador_semantico.chequearTipoFactorValido(yyval.sval); yyval.nodo = generador_codigo_intermedio.generarNodo(yyval.sval, null, null);}
 break;
 case 134:
-//#line 276 "Gramatica.y"
+//#line 281 "Gramatica.y"
 {yyval.sval = val_peek(0).sval; yyval.nodo = val_peek(0).nodo;}
 break;
 case 135:
-//#line 280 "Gramatica.y"
+//#line 285 "Gramatica.y"
 {verificarRango(val_peek(0).sval); analizador_semantico.chequearValidezSimbolo(val_peek(0).sval); yyval.sval = val_peek(0).sval; yyval.nodo = obtenerNodoConstante(val_peek(0).sval, "INT");}
 break;
 case 136:
-//#line 281 "Gramatica.y"
+//#line 286 "Gramatica.y"
 {analizador_lexico.constanteNegativaDetectada(val_peek(0).sval); analizador_semantico.chequearValidezSimbolo("-" + val_peek(0).sval); analizador_semantico.registrarTipoConstante("INT", "-" + val_peek(0).sval); yyval.sval = "-" + val_peek(0).sval; yyval.nodo = obtenerNodoConstante("-" + val_peek(0).sval, "INT");}
 break;
 case 137:
-//#line 282 "Gramatica.y"
+//#line 287 "Gramatica.y"
 {analizador_semantico.registrarTipoConstante("ULONG", val_peek(0).sval); analizador_semantico.chequearValidezSimbolo(val_peek(0).sval); yyval.sval = val_peek(0).sval; yyval.nodo = obtenerNodoConstante(val_peek(0).sval, "ULONG");}
 break;
 case 138:
-//#line 283 "Gramatica.y"
+//#line 288 "Gramatica.y"
 {analizador_semantico.registrarTipoConstante("DOUBLE", val_peek(0).sval); analizador_semantico.chequearValidezSimbolo(val_peek(0).sval); yyval.sval = val_peek(0).sval; yyval.nodo = obtenerNodoConstante(val_peek(0).sval, "DOUBLE");}
 break;
 case 139:
-//#line 284 "Gramatica.y"
+//#line 289 "Gramatica.y"
 {analizador_lexico.constanteNegativaDetectada(val_peek(0).sval); analizador_semantico.chequearValidezSimbolo("-" + val_peek(0).sval); analizador_semantico.registrarTipoConstante("DOUBLE", "-" + val_peek(0).sval); yyval.sval = "-" + val_peek(0).sval; yyval.nodo = obtenerNodoConstante("-" + val_peek(0).sval, "DOUBLE");}
 break;
 case 140:
-//#line 288 "Gramatica.y"
+//#line 293 "Gramatica.y"
 {System.out.print("(INVOCACION A FUNCION) "); analizador_semantico.chequearInvocacionFuncionValida(analizador_semantico.verificarReferenciaValida(val_peek(2).sval, true), val_peek(1).sval); String funcion_invocada = analizador_semantico.obtenerFuncionInvocada(val_peek(2).sval); yyval.nodo = generador_codigo_intermedio.generarNodo("CALL", generador_codigo_intermedio.generarNodo(funcion_invocada, null, null), val_peek(1).nodo); if (yyval.nodo != null) {yyval.nodo.setParesVariableAtributo(analizador_semantico.obtenerParesMapeoInvocacion(funcion_invocada, analizador_semantico.obtenerVariablesInstanciaInvocacion())); if (val_peek(1).nodo != null) val_peek(1).nodo.setParametroFormalAsociado(analizador_semantico.obtenerParametroFormalFuncion(funcion_invocada));};}
 break;
 case 141:
-//#line 292 "Gramatica.y"
+//#line 297 "Gramatica.y"
 {yyval.sval = analizador_semantico.verificarReferenciaValida(val_peek(0).sval, true); AnalizadorSemantico.lexema_invocacion_metodo_actual = val_peek(0).sval;}
 break;
 case 142:
-//#line 296 "Gramatica.y"
+//#line 301 "Gramatica.y"
 {yyval.sval = analizador_semantico.verificarReferenciaValida(val_peek(0).sval, false); yyval.nodo = generador_codigo_intermedio.generarNodo(yyval.sval, null, null);}
 break;
 case 143:
-//#line 300 "Gramatica.y"
+//#line 305 "Gramatica.y"
 {analizador_semantico.eliminarEntradaOriginalID(val_peek(0).sval); yyval.sval = val_peek(2).sval + "." + val_peek(0).sval;}
 break;
 case 144:
-//#line 301 "Gramatica.y"
+//#line 306 "Gramatica.y"
 {analizador_semantico.eliminarEntradaOriginalID(val_peek(0).sval); yyval.sval = val_peek(0).sval;}
 break;
 case 145:
-//#line 305 "Gramatica.y"
+//#line 310 "Gramatica.y"
 {yyval.sval = val_peek(1).sval; yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("PARAMETRO_REAL", val_peek(1).nodo);}
 break;
 case 146:
-//#line 306 "Gramatica.y"
+//#line 311 "Gramatica.y"
 {yyval.sval = null; yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("PARAMETRO_REAL", null);}
 break;
 case 147:
-//#line 307 "Gramatica.y"
+//#line 312 "Gramatica.y"
 {agregarError("ERROR: Parametro real invalido, el formato correcto es: '(' expresion_aritmetica ')' o '(' ')' "); yyval.sval = null; yyval.nodo = null;}
 break;
 case 148:
-//#line 311 "Gramatica.y"
+//#line 316 "Gramatica.y"
 {System.out.print("(CLAUSULA DE SELECCION IF SIN POSIBLES RETORNOS Y SIN ELSE) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(3).nodo, generador_codigo_intermedio.generarNodoUnidireccional("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(2).nodo)));}
 break;
 case 149:
-//#line 312 "Gramatica.y"
+//#line 317 "Gramatica.y"
 {System.out.print("(CLAUSULA DE SELECCION IF SIN POSIBLES RETORNOS Y ELSE SIN POSIBLES RETORNOS) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(5).nodo, generador_codigo_intermedio.generarNodo("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(4).nodo), generador_codigo_intermedio.generarNodoUnidireccional("ELSE", val_peek(2).nodo)));}
 break;
 case 150:
-//#line 316 "Gramatica.y"
+//#line 321 "Gramatica.y"
 {System.out.print("(CLAUSULA DE SELECCION IF DE RETORNO PARCIAL Y SIN ELSE) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(3).nodo, generador_codigo_intermedio.generarNodoUnidireccional("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(2).nodo)));}
 break;
 case 151:
-//#line 317 "Gramatica.y"
+//#line 322 "Gramatica.y"
 {System.out.print("(CLAUSULA DE SELECCION IF DE RETORNO PARCIAL Y ELSE SIN POSIBLES RETORNOS) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(5).nodo, generador_codigo_intermedio.generarNodo("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(4).nodo), generador_codigo_intermedio.generarNodoUnidireccional("ELSE", val_peek(2).nodo)));}
 break;
 case 152:
-//#line 318 "Gramatica.y"
+//#line 323 "Gramatica.y"
 {System.out.print("(CLAUSULA DE SELECCION IF SIN POSIBLES RETORNOS Y ELSE DE RETORNO PARCIAL) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(5).nodo, generador_codigo_intermedio.generarNodo("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(4).nodo), generador_codigo_intermedio.generarNodoUnidireccional("ELSE", val_peek(2).nodo)));}
 break;
 case 153:
-//#line 319 "Gramatica.y"
+//#line 324 "Gramatica.y"
 {System.out.print("(CLAUSULA DE SELECCION IF DE RETORNO PARCIAL Y ELSE DE RETORNO PARCIAL) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(5).nodo, generador_codigo_intermedio.generarNodo("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(4).nodo), generador_codigo_intermedio.generarNodoUnidireccional("ELSE", val_peek(2).nodo)));}
 break;
 case 154:
-//#line 320 "Gramatica.y"
+//#line 325 "Gramatica.y"
 {System.out.print("(CLAUSULA DE SELECCION IF DE RETORNO COMPLETO Y SIN ELSE) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(3).nodo, generador_codigo_intermedio.generarNodoUnidireccional("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(2).nodo)));}
 break;
 case 155:
-//#line 321 "Gramatica.y"
+//#line 326 "Gramatica.y"
 {System.out.print("(CLAUSULA DE SELECCION IF DE RETORNO PARCIAL Y ELSE DE RETORNO COMPLETO) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(5).nodo, generador_codigo_intermedio.generarNodo("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(4).nodo), generador_codigo_intermedio.generarNodoUnidireccional("ELSE", val_peek(2).nodo)));}
 break;
 case 156:
-//#line 322 "Gramatica.y"
+//#line 327 "Gramatica.y"
 {System.out.print("(CLAUSULA DE SELECCION IF SIN POSIBLES RETORNOS Y ELSE DE RETORNO COMPLETO) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(5).nodo, generador_codigo_intermedio.generarNodo("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(4).nodo), generador_codigo_intermedio.generarNodoUnidireccional("ELSE", val_peek(2).nodo)));}
 break;
 case 157:
-//#line 323 "Gramatica.y"
+//#line 328 "Gramatica.y"
 {System.out.print("(CLAUSULA DE SELECCION IF DE RETORNO COMPLETO Y ELSE DE RETORNO PARCIAL) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(5).nodo, generador_codigo_intermedio.generarNodo("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(4).nodo), generador_codigo_intermedio.generarNodoUnidireccional("ELSE", val_peek(2).nodo)));}
 break;
 case 158:
-//#line 324 "Gramatica.y"
+//#line 329 "Gramatica.y"
 {System.out.print("(CLAUSULA DE SELECCION IF DE RETORNO COMPLETO Y ELSE SIN POSIBLES RETORNOS) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(5).nodo, generador_codigo_intermedio.generarNodo("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(4).nodo), generador_codigo_intermedio.generarNodoUnidireccional("ELSE", val_peek(2).nodo)));}
 break;
 case 159:
-//#line 327 "Gramatica.y"
+//#line 332 "Gramatica.y"
 {System.out.print("(CLAUSULA DE SELECCION IF ELSE DE RETORNO COMPLETO) "); yyval.nodo = generador_codigo_intermedio.generarNodo("IF", val_peek(5).nodo, generador_codigo_intermedio.generarNodo("CUERPO_IF", generador_codigo_intermedio.generarNodoUnidireccional("THEN", val_peek(4).nodo), generador_codigo_intermedio.generarNodoUnidireccional("ELSE", val_peek(2).nodo)));}
 break;
 case 160:
-//#line 331 "Gramatica.y"
+//#line 336 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
 case 161:
-//#line 332 "Gramatica.y"
-{yyval.nodo = val_peek(0).nodo;}
-break;
-case 162:
-//#line 333 "Gramatica.y"
-{yyval.nodo = null;}
-break;
-case 163:
 //#line 337 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
-case 164:
-//#line 341 "Gramatica.y"
-{yyval.nodo = val_peek(0).nodo;}
+case 162:
+//#line 338 "Gramatica.y"
+{yyval.nodo = null;}
 break;
-case 165:
+case 163:
 //#line 342 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
-case 166:
+case 164:
 //#line 346 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
-case 167:
-//#line 350 "Gramatica.y"
+case 165:
+//#line 347 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
-case 168:
+case 166:
 //#line 351 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
-case 169:
+case 167:
 //#line 355 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
+case 168:
+//#line 356 "Gramatica.y"
+{yyval.nodo = val_peek(0).nodo;}
+break;
+case 169:
+//#line 360 "Gramatica.y"
+{yyval.nodo = val_peek(0).nodo;}
+break;
 case 170:
-//#line 359 "Gramatica.y"
+//#line 364 "Gramatica.y"
 {yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("CONDICION", val_peek(1).nodo);}
 break;
 case 171:
-//#line 360 "Gramatica.y"
+//#line 365 "Gramatica.y"
 {agregarError("ERROR: Condicion de clausula IF invalida, el formato correcto es: '(' comparacion ')'"); yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("CONDICION", val_peek(1).nodo);}
 break;
 case 172:
-//#line 361 "Gramatica.y"
+//#line 366 "Gramatica.y"
 {agregarError("ERROR: Condicion de clausula IF invalida, el formato correcto es: '(' comparacion ')'"); yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("CONDICION", val_peek(0).nodo);}
 break;
 case 173:
-//#line 362 "Gramatica.y"
+//#line 367 "Gramatica.y"
 {agregarError("ERROR: Condicion de clausula IF invalida, el formato correcto es: '(' comparacion ')'"); yyval.nodo = null;}
 break;
 case 174:
-//#line 363 "Gramatica.y"
+//#line 368 "Gramatica.y"
 {agregarError("ERROR: Condicion de clausula IF invalida, el formato correcto es: '(' comparacion ')'"); yyval.nodo = generador_codigo_intermedio.generarNodoUnidireccional("CONDICION", val_peek(0).nodo);}
 break;
 case 175:
-//#line 367 "Gramatica.y"
+//#line 372 "Gramatica.y"
 {analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, true, false); yyval.nodo = generador_codigo_intermedio.generarNodo(">", val_peek(2).nodo, val_peek(0).nodo); if (yyval.nodo != null && val_peek(2).nodo != null) yyval.nodo.setTipo(val_peek(2).nodo.getTipo());}
 break;
 case 176:
-//#line 368 "Gramatica.y"
+//#line 373 "Gramatica.y"
 {analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, true, false); yyval.nodo = generador_codigo_intermedio.generarNodo("<", val_peek(2).nodo, val_peek(0).nodo); if (yyval.nodo != null && val_peek(2).nodo != null) yyval.nodo.setTipo(val_peek(2).nodo.getTipo());}
 break;
 case 177:
-//#line 369 "Gramatica.y"
+//#line 374 "Gramatica.y"
 {analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, true, false); yyval.nodo = generador_codigo_intermedio.generarNodo(">=", val_peek(2).nodo, val_peek(0).nodo); if (yyval.nodo != null && val_peek(2).nodo != null) yyval.nodo.setTipo(val_peek(2).nodo.getTipo());}
 break;
 case 178:
-//#line 370 "Gramatica.y"
+//#line 375 "Gramatica.y"
 {analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, true, false); yyval.nodo = generador_codigo_intermedio.generarNodo("<=", val_peek(2).nodo, val_peek(0).nodo); if (yyval.nodo != null && val_peek(2).nodo != null) yyval.nodo.setTipo(val_peek(2).nodo.getTipo());}
 break;
 case 179:
-//#line 371 "Gramatica.y"
+//#line 376 "Gramatica.y"
 {analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, true, false); yyval.nodo = generador_codigo_intermedio.generarNodo("==", val_peek(2).nodo, val_peek(0).nodo); if (yyval.nodo != null && val_peek(2).nodo != null) yyval.nodo.setTipo(val_peek(2).nodo.getTipo());}
 break;
 case 180:
-//#line 372 "Gramatica.y"
+//#line 377 "Gramatica.y"
 {analizador_semantico.chequearValidezOperacionComparacionExpresiones(val_peek(2).sval, val_peek(0).sval, true, false); yyval.nodo = generador_codigo_intermedio.generarNodo("!!", val_peek(2).nodo, val_peek(0).nodo); if (yyval.nodo != null && val_peek(2).nodo != null) yyval.nodo.setTipo(val_peek(2).nodo.getTipo());}
 break;
 case 181:
-//#line 376 "Gramatica.y"
+//#line 381 "Gramatica.y"
 {System.out.print("(SALIDA DE MENSAJE) "); analizador_semantico.chequearValidezSimbolo(val_peek(1).sval); yyval.nodo = generador_codigo_intermedio.generarNodo("PRINT", null, null); if (yyval.nodo != null && val_peek(1).sval != null) yyval.nodo.setCadenaImpresion(val_peek(1).sval.replaceAll("%", ""));}
 break;
 case 182:
-//#line 377 "Gramatica.y"
+//#line 382 "Gramatica.y"
 {System.out.print("(SALIDA DE MENSAJE) "); agregarError("ERROR: Salida de mensaje invalida, el formato correcto es: PRINT CADENA_CARACTERES ','"); yyval.nodo = null;}
 break;
 case 183:
-//#line 381 "Gramatica.y"
+//#line 386 "Gramatica.y"
 {System.out.print("(SENTENCIA FOR) "); analizador_semantico.chequearCompatibilidadControladoresFor(val_peek(2).sval, val_peek(1).sval); if (val_peek(1).nodo != null) val_peek(1).nodo.getNodoHijoIzquierdo().setSimbolo(val_peek(2).sval); yyval.nodo = generador_codigo_intermedio.generarNodo("FOR", generador_codigo_intermedio.generarNodo("=", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoConstante(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 0), analizador_semantico.obtenerTipoElemento(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2)))), generador_codigo_intermedio.generarNodo("BUCLE", generador_codigo_intermedio.generarNodoUnidireccional("CONDICION_FOR", val_peek(1).nodo), generador_codigo_intermedio.generarNodo("CUERPO_FOR", val_peek(0).nodo, generador_codigo_intermedio.generarNodo("=", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoExpresion("+", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoConstante(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2), analizador_semantico.obtenerTipoElemento(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2))))))));}
 break;
 case 184:
-//#line 385 "Gramatica.y"
+//#line 390 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
 case 185:
-//#line 386 "Gramatica.y"
+//#line 391 "Gramatica.y"
 {yyval.nodo = val_peek(1).nodo;}
 break;
 case 186:
-//#line 387 "Gramatica.y"
+//#line 392 "Gramatica.y"
 {yyval.nodo = null;}
 break;
 case 187:
-//#line 391 "Gramatica.y"
+//#line 396 "Gramatica.y"
 {System.out.print("(SENTENCIA FOR CON SENTENCIA EJECUTABLE DE RETORNO PARCIAL) "); analizador_semantico.chequearCompatibilidadControladoresFor(val_peek(2).sval, val_peek(1).sval); if (val_peek(1).nodo != null) val_peek(1).nodo.getNodoHijoIzquierdo().setSimbolo(val_peek(2).sval); yyval.nodo = generador_codigo_intermedio.generarNodo("FOR", generador_codigo_intermedio.generarNodo("=", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoConstante(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 0), analizador_semantico.obtenerTipoElemento(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2)))), generador_codigo_intermedio.generarNodo("BUCLE", generador_codigo_intermedio.generarNodoUnidireccional("CONDICION_FOR", val_peek(1).nodo), generador_codigo_intermedio.generarNodo("CUERPO_FOR", val_peek(0).nodo, generador_codigo_intermedio.generarNodo("=", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoExpresion("+", generador_codigo_intermedio.generarNodo(val_peek(2).sval, null, null), obtenerNodoConstante(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2), analizador_semantico.obtenerTipoElemento(analizador_semantico.obtenerConstanteControladoresFor(val_peek(1).sval, 2))))))));}
 break;
 case 188:
-//#line 395 "Gramatica.y"
+//#line 400 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
 case 189:
-//#line 396 "Gramatica.y"
+//#line 401 "Gramatica.y"
 {yyval.nodo = val_peek(0).nodo;}
 break;
 case 190:
-//#line 397 "Gramatica.y"
+//#line 402 "Gramatica.y"
 {yyval.nodo = val_peek(1).nodo;}
 break;
 case 191:
-//#line 398 "Gramatica.y"
+//#line 403 "Gramatica.y"
 {yyval.nodo = val_peek(1).nodo;}
 break;
 case 192:
-//#line 402 "Gramatica.y"
+//#line 407 "Gramatica.y"
 {analizador_semantico.eliminarEntradaOriginalID(val_peek(2).sval); yyval.sval = analizador_semantico.verificarReferenciaValida(val_peek(2).sval, false); analizador_semantico.verificarValidezVariableControlFor(val_peek(2).sval);}
 break;
 case 193:
-//#line 403 "Gramatica.y"
+//#line 408 "Gramatica.y"
 {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID(val_peek(1).sval); yyval.sval = analizador_semantico.verificarReferenciaValida(val_peek(1).sval, false); analizador_semantico.verificarValidezVariableControlFor(val_peek(1).sval);}
 break;
 case 194:
-//#line 404 "Gramatica.y"
+//#line 409 "Gramatica.y"
 {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID(val_peek(1).sval); yyval.sval = analizador_semantico.verificarReferenciaValida(val_peek(1).sval, false); analizador_semantico.verificarValidezVariableControlFor(val_peek(1).sval);}
 break;
 case 195:
-//#line 405 "Gramatica.y"
+//#line 410 "Gramatica.y"
 {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); analizador_semantico.eliminarEntradaOriginalID(val_peek(0).sval); yyval.sval = analizador_semantico.verificarReferenciaValida(val_peek(0).sval, false); analizador_semantico.verificarValidezVariableControlFor(val_peek(0).sval);}
 break;
 case 196:
-//#line 406 "Gramatica.y"
+//#line 411 "Gramatica.y"
 {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); yyval.sval = null;}
 break;
 case 197:
-//#line 407 "Gramatica.y"
+//#line 412 "Gramatica.y"
 {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); yyval.sval = null;}
 break;
 case 198:
-//#line 408 "Gramatica.y"
+//#line 413 "Gramatica.y"
 {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); yyval.sval = null;}
 break;
 case 199:
-//#line 409 "Gramatica.y"
+//#line 414 "Gramatica.y"
 {agregarError("ERROR: Encabezado de bucle for invalido, el formato correcto es: FOR ID IN RANGE"); yyval.sval = null;}
 break;
 case 200:
-//#line 413 "Gramatica.y"
+//#line 418 "Gramatica.y"
 {yyval.sval = analizador_semantico.verificarConstantesControlFor(val_peek(5).sval, val_peek(3).sval, val_peek(1).sval); yyval.nodo = generador_codigo_intermedio.generarNodo(analizador_semantico.obtenerComparadorAsociado(val_peek(1).sval), generador_codigo_intermedio.generarNodo("", null, null), val_peek(3).nodo); if (yyval.nodo != null && val_peek(5).sval != null) yyval.nodo.setTipo(AnalizadorLexico.simbolos.get(val_peek(5).sval).getTipo());}
 break;
 case 201:
-//#line 414 "Gramatica.y"
+//#line 419 "Gramatica.y"
 {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); yyval.sval = analizador_semantico.verificarConstantesControlFor(val_peek(5).sval, val_peek(3).sval, val_peek(1).sval); yyval.nodo = generador_codigo_intermedio.generarNodo(analizador_semantico.obtenerComparadorAsociado(val_peek(1).sval), generador_codigo_intermedio.generarNodo("", null, null), val_peek(3).nodo); if (yyval.nodo != null && val_peek(5).sval != null) yyval.nodo.setTipo(AnalizadorLexico.simbolos.get(val_peek(5).sval).getTipo());}
 break;
 case 202:
-//#line 415 "Gramatica.y"
+//#line 420 "Gramatica.y"
 {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); yyval.sval = analizador_semantico.verificarConstantesControlFor(val_peek(4).sval, val_peek(2).sval, val_peek(0).sval); yyval.nodo = generador_codigo_intermedio.generarNodo(analizador_semantico.obtenerComparadorAsociado(val_peek(0).sval), generador_codigo_intermedio.generarNodo("", null, null), val_peek(2).nodo); if (yyval.nodo != null && val_peek(4).sval != null) yyval.nodo.setTipo(AnalizadorLexico.simbolos.get(val_peek(4).sval).getTipo());}
 break;
 case 203:
-//#line 416 "Gramatica.y"
+//#line 421 "Gramatica.y"
 {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); yyval.sval = analizador_semantico.verificarConstantesControlFor(val_peek(4).sval, val_peek(2).sval, val_peek(0).sval); yyval.nodo = generador_codigo_intermedio.generarNodo(analizador_semantico.obtenerComparadorAsociado(val_peek(0).sval), generador_codigo_intermedio.generarNodo("", null, null), val_peek(2).nodo); if (yyval.nodo != null && val_peek(4).sval != null) yyval.nodo.setTipo(AnalizadorLexico.simbolos.get(val_peek(4).sval).getTipo());}
 break;
 case 204:
-//#line 417 "Gramatica.y"
+//#line 422 "Gramatica.y"
 {agregarError("ERROR: Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'"); yyval.sval = null; yyval.nodo = null;}
 break;
-//#line 1833 "Parser.java"
+//#line 1855 "Parser.java"
 //########## END OF USER-SUPPLIED ACTIONS ##########
     }//switch
     //#### Now let's reduce... ####
@@ -1991,6 +2013,10 @@ public Parser(boolean debugMe)
 
 }
 //################### END OF CLASS ##############################
+
+
+
+
 
 
 

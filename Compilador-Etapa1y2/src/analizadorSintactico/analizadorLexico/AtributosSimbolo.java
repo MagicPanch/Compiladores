@@ -3,7 +3,7 @@ package analizadorSintactico.analizadorLexico;
 import java.util.ArrayList;
 
 public class AtributosSimbolo {
-	private int token;
+	private int token = 0;
 	private int cantidad = -1; //ya que solo para las constantes y las cadenas de caracteres tiene sentido almacenar la cantidad de repeticiones (para las cadenas tiene sentido para un chequeo semantico que implica quitarlas de la tabla de simbolos en ciertos casos)
 	private String tipo = null;
 	private String uso = null;

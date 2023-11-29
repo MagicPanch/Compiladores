@@ -167,7 +167,12 @@ public class AnalizadorLexico {
 			String tipo = atributos_simbolo.getTipo();
 			if (tipo == null)
 				tipo = "-";
-			String lexema_funcion_implementacion = atributos_simbolo.getLexemaFuncionImplementacion();
+			Integer token = atributos_simbolo.getToken();
+			String token_string = "-";
+			if (token != null && token.intValue() != 0)
+				token_string = token.toString();
+			String cadena_caracteres_print = atributos_simbolo.getCadenaCaracteresPrint();
+			/*String lexema_funcion_implementacion = atributos_simbolo.getLexemaFuncionImplementacion();
 			if (lexema_funcion_implementacion == null)
 				lexema_funcion_implementacion = "-";
 			String lexema_interfaz_implementada = atributos_simbolo.getLexemaInterfazImplementada();
@@ -190,8 +195,12 @@ public class AnalizadorLexico {
 						clases_heredadas += lexemas_clases_heredadas.get(i) + ", ";
 					else
 						clases_heredadas += lexemas_clases_heredadas.get(i);
-			}
-			System.out.println("Lexema: " + key + " / Token: " + atributos_simbolo.getToken() + " / Uso: " + uso + " / Tipo: " + tipo + " / Lexema de funcion implementadora: " + lexema_funcion_implementacion + " / Cantidad de prototipos: " + atributos_simbolo.getCantidadPrototipos() + " / Lexema de interfaz implementada: " + lexema_interfaz_implementada + " / Parametro formal: " + nombre_parametro_formal + " / Lexema clase asociada: " + lexema_clase_asociada + " / Clases heredadas: " + clases_heredadas);
+			}*/
+			//System.out.println("Lexema: " + key + " / Token: " + atributos_simbolo.getToken() + " / Uso: " + uso + " / Tipo: " + tipo + " / Lexema de funcion implementadora: " + lexema_funcion_implementacion + " / Cantidad de prototipos: " + atributos_simbolo.getCantidadPrototipos() + " / Lexema de interfaz implementada: " + lexema_interfaz_implementada + " / Parametro formal: " + nombre_parametro_formal + " / Lexema clase asociada: " + lexema_clase_asociada + " / Clases heredadas: " + clases_heredadas);
+			if (cadena_caracteres_print == null)
+				System.out.println("Lexema: " + key + " / Token: " + token_string + " / Uso: " + uso + " / Tipo: " + tipo);
+			else
+				System.out.println("Lexema: " + key + " / Token: " + token_string + " / Uso: " + uso + " / Tipo: " + tipo + " / Cadena asociada: " + cadena_caracteres_print);
 			System.out.println();
 		}
 		System.out.println();	
