@@ -1,0 +1,93 @@
+[1]			{
+[2]				INT t,
+[3]				INTERFACE interfaz {
+[4]					VOID funcion_interfaz (INT numero),		*{Se deberia detectar para linea 21: "DECLARACION DE PROTOTIPO DE FUNCION"}*
+[5]				},							*{Se deberia detectar para linea 22: "DECLARACION DE INTERFAZ CON BLOQUE DE PROTOTIPOS"}*
+[6]			
+[7]				CLASS c1 IMPLEMENT interfaz {
+[8]					INT _atributo1; _atributo2,				*{Se deberia detectar para linea 3: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
+[9]			
+[10]					VOID funcion_interfaz (INT numero) {
+[11]						VOID funcion_anidada() {
+[12]							RETURN,
+[13]						},									*{Se deberia detectar para linea 8: "DECLARACION DE FUNCION"}*				
+[14]						_atributo1 = 15_i,					*{Se deberia detectar para linea 9: "ASIGNACION USANDO OPERADOR DE IGUAL"}*		
+[15]						FOR t IN RANGE (3_i;15_i;3_i) {
+[16]							numero -= 1_i,					*{Se deberia detectar para linea 11: "ASIGNACION USANDO OPERADOR DE MENOS IGUAL"}*		
+[17]							IF (numero !! 12_i)
+[18]								RETURN,
+[19]							END_IF,							*{Se deberia detectar para linea 14: "CLAUSULA DE SELECCION IF CON SENTENCIA EJECUTABLE DE RETORNO COMPLETO Y SIN ELSE"}*
+[20]						},									*{Se deberia detectar para linea 15: "SENTENCIA FOR CON BLOQUE DE SENTENCIAS EJECUTABLES DE RETORNO PARCIAL"}*
+[21]						RETURN,
+[22]					},										*{Se deberia detectar para linea 17: "DECLARACION DE FUNCION"}*
+[23]				},											*{Se deberia detectar para linea 18: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*											
+[24]				
+[25]				CLASS c2 {
+[26]					c1 c1,						*{Se deberia detectar para linea 25: "DECLARACION DE REFERENCIA A CLASE"}*
+[27]			
+[28]					VOID funcion_c2(),				*{Se deberia detectar para linea 27: "DECLARACION DE PROTOTIPO DE FUNCION"}*
+[29]				},							*{Se deberia detectar para linea 28: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*
+[30]				
+[31]				IMPL FOR c2: {
+[32]					VOID funcion_c2() {
+[33]						c1.funcion_interfaz(1_i),
+[34]						RETURN,
+[35]					},					*{Se deberia detectar para linea 33: "DECLARACION DE FUNCION"}*
+[36]				},						*{Se deberia detectar para linea 34: "DECLARACION DE CLAUSULA IMPL CON BLOQUE DE FUNCIONES IMPLEMENTADAS"}*		
+[37]			
+[38]				INT int1; int2; int3 ,						*{Se deberia detectar para linea 36: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*		
+[39]				DOUBLE double1; double2; double3 ,				*{Se deberia detectar para linea 37: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
+[40]			
+[41]				VOID funcion1 (ULONG parametro) {
+[42]					RETURN,
+[43]				},
+[44]			
+[45]				VOID funcionxd() {RETURN,},										*{Se deberia detectar para linea 41: "DECLARACION DE FUNCION"}*	
+[46]				
+[47]				INT n,
+[48]			
+[49]				VOID funcion2 ()
+[50]				{
+[51]					INT funcionxd,
+[52]					funcionxd(),
+[53]					VOID n () {RETURN,},
+[54]					n = 1_i,
+[55]					double3 -= -5.3 + double1 * 1.,		*{Se deberia detectar para linea 45: "ASIGNACION USANDO OPERADOR DE MENOS IGUAL"}*
+[56]					IF (double3 < double2) {
+[57]						double2 = 1.2D+5,				*{Se deberia detectar para linea 47: "ASIGNACION USANDO OPERADOR DE IGUAL"}*
+[58]						IF (int1 == int2)
+[59]							RETURN,
+[60]						ELSE
+[61]							RETURN,
+[62]						END_IF,							*{Se deberia detectar para linea 52: "CLAUSULA DE SELECCION IF CON SENTENCIA EJECUTABLE DE RETORNO COMPLETO Y ELSE CON SENTENCIA EJECUTABLE DE RETORNO COMPLETO"}*		
+[63]					}
+[64]					ELSE
+[65]						RETURN,
+[66]					END_IF,								*{Se deberia detectar para linea 56: "CLAUSULA DE SELECCION IF CON BLOQUE DE SENTENCIAS EJECUTABLES DE RETORNO COMPLETO Y ELSE CON SENTENCIA EJECUTABLE DE RETORNO COMPLETO"}*				
+[67]				},										*{Se deberia detectar para linea 57: "DECLARACION DE FUNCION"}*
+[68]				ULONG _ulong1,
+[69]				ULONG ulong1 ,							*{Se deberia detectar para linea 59: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
+[70]				funcion1(ulong1 + ulong1),				*{Se deberia detectar para linea 60: "INVOCACION A FUNCION"}*
+[71]				funcion1(ulong1),						*{Se deberia detectar para linea 61: "INVOCACION A FUNCION"}*
+[72]				funcion1(1234_ul),						*{Se deberia detectar para linea 62: "INVOCACION A FUNCION"}*
+[73]				funcion2(),								*{Se deberia detectar para linea 63: "INVOCACION A FUNCION"}*
+[74]			
+[75]				PRINT %
+[76]				hola         
+[77]				
+[78]				mundo	%,								*{Se deberia detectar para linea 68: "SALIDA DE MENSAJE"}*
+[79]				c2 inst_c2,
+[80]				c1 inst_c1,								*{Se deberia detectar para linea 70: "DECLARACION DE LISTA DE VARIABLES DEL TIPO DE UNA CLASE"}*
+[81]				inst_c1.funcion_interfaz(3_i),
+[82]				inst_c2.c1.funcion_interfaz(5_i),
+[83]				INT i,
+[84]				INT j,
+[85]				double1 = 1.5,
+[86]				FOR i IN RANGE (4_i;32767_i;3_i) {
+[87]					FOR j IN RANGE (0_i;100_i;-10_i)
+[88]						inst_c2.funcion_c2(),			*{Se deberia detectar para linea 73: "INVOCACION A FUNCION" y "SENTENCIA FOR CON SENTENCIA EJECUTABLE"}*
+[89]					double1 = double3 / double1 + 3.0,			*{Se deberia detectar para linea 74: "ASIGNACION USANDO OPERADOR DE IGUAL"}*
+[90]				        funcion2(),
+[91]				},										*{Se deberia detectar para linea 75: "SENTENCIA FOR CON BLOQUE DE SENTENCIAS EJECUTABLES"}*
+[92]			}							*{Se deberia detectar para linea 77: "PROGRAMA"}*											
+[93]			*{NOTA: AL FINAL DE LA COMPILACION, DEBE FIGURAR UN MENSAJE DE QUE EL PROGRAMA COMPILO CORRECTAMENTE. ADEMAS, COMO ACLARACION PARTICULAR, EN LA TABLA DE SIMBOLOS NO DEBE FIGURAR EL LEXEMA PARA LA CONSTANTE 5_I POSITIVA, PERO SI LA DE -5_I (O SEA LA MISMA PERO NEGATIVA), YA QUE EN ESTE PROGRAMA HAY UNA  SOLA OCURRENCIA DE 5_I PERO NEGATIVA}*

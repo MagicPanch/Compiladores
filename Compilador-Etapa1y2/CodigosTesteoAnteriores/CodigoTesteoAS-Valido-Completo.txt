@@ -1,4 +1,8 @@
 {
+	INTERFACE interfaz {
+		VOID funcion_interfaz (INT numero),		*{Se deberia detectar para linea 21: "DECLARACION DE PROTOTIPO DE FUNCION"}*
+	},							*{Se deberia detectar para linea 22: "DECLARACION DE INTERFAZ CON BLOQUE DE PROTOTIPOS"}*
+
 	CLASS c1 IMPLEMENT interfaz {
 		INT _atributo1; _atributo2,				*{Se deberia detectar para linea 3: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
 
@@ -17,29 +21,25 @@
 		},										*{Se deberia detectar para linea 17: "DECLARACION DE FUNCION"}*
 	},											*{Se deberia detectar para linea 18: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*											
 
-	INTERFACE interfaz {
-		VOID funcion_interfaz (INT numero),		*{Se deberia detectar para linea 21: "DECLARACION DE PROTOTIPO DE FUNCION"}*
-	},											*{Se deberia detectar para linea 22: "DECLARACION DE INTERFAZ CON BLOQUE DE PROTOTIPOS"}*
-
 	CLASS c2 {
-		c1,							*{Se deberia detectar para linea 25: "DECLARACION DE REFERENCIA A CLASE"}*			
+		c1,						*{Se deberia detectar para linea 25: "DECLARACION DE REFERENCIA A CLASE"}*
 
-		VOID funcion_c2(),			*{Se deberia detectar para linea 27: "DECLARACION DE PROTOTIPO DE FUNCION"}*
-	},								*{Se deberia detectar para linea 28: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*
-
+		VOID funcion_c2(),				*{Se deberia detectar para linea 27: "DECLARACION DE PROTOTIPO DE FUNCION"}*
+	},							*{Se deberia detectar para linea 28: "DECLARACION DE CLASE CON BLOQUE DE SENTENCIAS DECLARATIVAS"}*
+	
 	IMPL FOR c2: {
-		VOID funcion_c2() {
+		VOID funcion_clase_c2() {
 			RETURN,
-		},							*{Se deberia detectar para linea 33: "DECLARACION DE FUNCION"}*		
-	},								*{Se deberia detectar para linea 34: "DECLARACION DE CLAUSULA IMPL CON BLOQUE DE FUNCIONES IMPLEMENTADAS"}*
+		},					*{Se deberia detectar para linea 33: "DECLARACION DE FUNCION"}*
+	},						*{Se deberia detectar para linea 34: "DECLARACION DE CLAUSULA IMPL CON BLOQUE DE FUNCIONES IMPLEMENTADAS"}*		
 
-	INT int1; int2; int3 ,					*{Se deberia detectar para linea 36: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*		
-	DOUBLE double1; double2; double3 ,		*{Se deberia detectar para linea 37: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
+	INT int1; int2; int3 ,						*{Se deberia detectar para linea 36: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*		
+	DOUBLE double1; double2; double3 ,				*{Se deberia detectar para linea 37: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
 
 	VOID funcion1 (ULONG parametro) {
 		RETURN,
 	},										*{Se deberia detectar para linea 41: "DECLARACION DE FUNCION"}*	
-
+	
 	VOID funcion2 ()
 	{
 		double3 -= -5_i + double1 * 1.,		*{Se deberia detectar para linea 45: "ASIGNACION USANDO OPERADOR DE MENOS IGUAL"}*
@@ -59,19 +59,22 @@
 	ULONG ulong1 ,							*{Se deberia detectar para linea 59: "DECLARACION DE LISTA DE VARIABLES NUMERICAS"}*
 	funcion1(ulong1 + ulong1),				*{Se deberia detectar para linea 60: "INVOCACION A FUNCION"}*
 	funcion1(ulong1),						*{Se deberia detectar para linea 61: "INVOCACION A FUNCION"}*
-	funcion1(1234_ul),						*{Se deberia detectar para linea 62: "INVOCACION A FUNCION"}*
+	funcion1(1234_i),						*{Se deberia detectar para linea 62: "INVOCACION A FUNCION"}*
 	funcion2(),								*{Se deberia detectar para linea 63: "INVOCACION A FUNCION"}*
 
 	PRINT %
 	hola         
 	
 	mundo	%,								*{Se deberia detectar para linea 68: "SALIDA DE MENSAJE"}*
-
+	c2 inst_c2,
 	c1 inst_c1,								*{Se deberia detectar para linea 70: "DECLARACION DE LISTA DE VARIABLES DEL TIPO DE UNA CLASE"}*
-	FOR i IN RANGE (0_i;10_i;-1_i) {
+	INT i,
+	DOUBLE j,
+	FOR i IN RANGE (4_i;32767_i;3_ul) {
 		FOR j IN RANGE (0_i;100_i;10_i)
-			inst_c1.funcion_c1(j),			*{Se deberia detectar para linea 73: "INVOCACION A FUNCION" y "SENTENCIA FOR CON SENTENCIA EJECUTABLE"}*
-		inst_c1._atributo1 = i / 2_i,		*{Se deberia detectar para linea 74: "ASIGNACION USANDO OPERADOR DE IGUAL"}*
+			inst_c2.funcion_c2(),			*{Se deberia detectar para linea 73: "INVOCACION A FUNCION" y "SENTENCIA FOR CON SENTENCIA EJECUTABLE"}*
+		inst_c1._atributo1 = i / inst_c1._atributo1 + 3_i,			*{Se deberia detectar para linea 74: "ASIGNACION USANDO OPERADOR DE IGUAL"}*
+	        funcion2(),
 	},										*{Se deberia detectar para linea 75: "SENTENCIA FOR CON BLOQUE DE SENTENCIAS EJECUTABLES"}*
 }							*{Se deberia detectar para linea 77: "PROGRAMA"}*											
 *{NOTA: AL FINAL DE LA COMPILACION, DEBE FIGURAR UN MENSAJE DE QUE EL PROGRAMA COMPILO CORRECTAMENTE. ADEMAS, COMO ACLARACION PARTICULAR, EN LA TABLA DE SIMBOLOS NO DEBE FIGURAR EL LEXEMA PARA LA CONSTANTE 5_I POSITIVA, PERO SI LA DE -5_I (O SEA LA MISMA PERO NEGATIVA), YA QUE EN ESTE PROGRAMA HAY UNA  SOLA OCURRENCIA DE 5_I PERO NEGATIVA}*

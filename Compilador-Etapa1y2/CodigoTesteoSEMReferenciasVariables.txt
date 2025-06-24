@@ -1,0 +1,43 @@
+{
+*{CODIGO DE TESTEO PARA EL ANALIZADOR SEMANTICO CON ERRORES DE REFERENCIAS A VARIABLES Y CON WARNINGS POR VARIABLES NUMERICAS NO REFERENCIADAS DEL LADO DERECHO DE UNA ASIGNACION}*
+
+	INT i1; i2,
+
+    CLASS c1 {
+        INT i3,
+
+        VOID funcion_c1() {
+            i1 = 0_i,               *{Notar que no hay problema al acceder al i1 del main desde la clase c1, porque el main es el ambito padre del ambito interno de esta clase}*
+            RETURN,
+        },
+        VOID prototipo_funcion(),
+    },
+
+    IMPL FOR c1: {
+        VOID prototipo_funcion() {
+            i3 = 1_i,               *{Notar que no hay problema al acceder al i3 de la clase c1 desde la implementacion de uno de sus metodos en una clausula IMPL que esta por fuera de la clase, y esto es correcto ya que tiene que poder acceder al ambito real de la clase aunque la clausula este por fuera}*
+            funcion_c1(),           *{Notar que no hay problema al invocar al metodo funcion_c1 de la clase c1 desde la implementacion de uno de sus metodos en una clausula IMPL que esta por fuera de la clase, y esto es correcto ya que tiene que poder acceder al ambito real de la clase aunque la clausula este por fuera}*
+            RETURN,
+        },
+    },
+
+    c1 inst_1,
+    c1 inst_2,
+    i3 = 3_i,                       *{DEBERIA DETECTARSE: "Referencia invalida, no existe ninguna variable o atributo con nombre 'i3' al alcance", porque desde el main no puede accederse directamente a un atributo de una clase (ya que esta justamente en el ambito de la clase), solo puede hacerse a traves de una instancia (que en realidad lo que hace es generar una nueva variable propia de la instancia)}*
+    inst_2.i3 = 5_i,                *{Notar que no hay problema al acceder al i3 de la clase c1 a traves de una instancia de dicha clase (en realidad es una variable nueva propia de la instancia, no el atributo real de la clase, ya que cada instancia debe tener sus propias variables asociadas a los atributos)}*
+    DOUBLE i2,                      *{DEBERIA DETECTARSE: "Ya existe una variable con el nombre 'i2' dentro del ambito 'main'", porque se esta redeclarando la variable i2 (si bien una es INT y la otra es DOUBLE, el problema es que se llaman igual y estan en el mismo ambito)}*
+    i1 = inst_1.i3,
+}
+*{NOTA: AL FINAL DE LA COMPILACION, DEBE FIGURAR UN MENSAJE DE QUE EL PROGRAMA NO COMPILO CORRECTAMENTE. ADEMAS NO TIENE QUE GENERARSE EL ARBOL SINTACTICO Y POR
+CONSIGUIENTE TAMPOCO EL ASSEMBLER. ADEMAS EN LA ULTIMA LINEA (LA DEL CIERRE DEL COMENTARIO LUEGO DEL PROGRAMA) DEBERIAN DETECTARSE LOS WARNINGS SIGUIENTES:
+
+"WARNING: Una variable llamada 'i3' fue declarada pero nunca referenciada en el lado derecho de alguna asignacion"
+"WARNING: Una variable llamada 'i2' fue declarada pero nunca referenciada en el lado derecho de alguna asignacion"
+"WARNING: Una variable llamada 'inst_2' fue declarada pero nunca referenciada en el lado derecho de alguna asignacion"
+"WARNING: Una variable llamada 'i1' fue declarada pero nunca referenciada en el lado derecho de alguna asignacion"
+
+EN EL CASO DE LA inst_c2, SI BIEN NO ES UNA VARIABLE DE TIPO NUMERICO, FIGURA PORQUE NINGUNO DE LAS VARIABLES PROPIAS DE ELLA QUE SE GEWNERAN FUERON REFERENCIADAS
+DEL LADO DERECHO DE UNA ASIGNACION. EN CAMBIO, COMO SE PUEDE VER, LA VARIABLE inst_1.i3 (VARIABLE PROPIA DE LA INSTANCIA ASOCIADA AL ATRIBUTO i3) SI FUE USADA DEL
+LADO DERECHO DE UNA ASIGNACION. POR ENDE, ESTO GENERA QUE LA INSTANCIA inst_1 NO APAREZCA EN ESE LISTADO (AUNQUE HUBIERA OTROS ATRIBUTOS, CON QUE UNA DE LAS
+VARIABLES DE LA INSTANCIA SEA REFERENCIADA ALCANZA)
+}*

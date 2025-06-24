@@ -1,0 +1,20 @@
+{
+*{CODIGO DE TESTEO PARA EL ANALIZADOR SEMANTICO CON ERRORES DE SENTENCIAS FOR CON ANIDAMIENTO INCLUIDO}*
+
+	INT i1; i2,
+	ULONG u1; u2,
+
+	i2 = 10_i,
+	u2 = 3000_ul,
+
+	FOR u1 IN RANGE (10_ul; 0_i; -2_i) {
+		i2 = i2 + 1_i,			
+		FOR i1 IN RANGE (0_ul; 20_ul; 1_ul)
+			u2 -= 5_ul,							*{DEBERIA DETECTARSE: "La variable de control del FOR y las 3 constantes tienen que ser todas del mismo tipo entero, ya sea INT o ULONG", porque el FOR mas interno tiene constantes de tipo ULONG en el controlador de rango de iteraciones, pero la variable de control es i1 que es de tipo INT}*	
+	},											*{DEBERIA DETECTARSE: "La variable de control del FOR y las 3 constantes tienen que ser todas del mismo tipo entero, ya sea INT o ULONG", porque el FOR mas externo tiene la variable de control u1 y la constante de inicializacion 10_ul, ambas de tipo ULONG, pero las constantes de incremento y de variacion (0_i y -2_i respectivamente) son de tipo INT}*
+
+	FOR u3 IN RANGE (0_ul; 20_ul; -1_ul)		*{DEBERIA DETECTARSE: "Referencia invalida, no existe ninguna variable o atributo con nombre 'u3' al alcance", porque la variable de control u3 nunca fue declarada. Tambien tendria que detectarse: "Control del rango de iteraciones de bucle FOR invalido, el formato correcto es: '(' constante ';' constante ';' constante ')'", debido a que la constante de variacion es un ULONG negativo (lo cual no esta permitido ya que las ULONG no llevan signo), lo que hace que no se considere como una constante}*
+		u2 -= 5_ul,
+}
+*{NOTA: AL FINAL DE LA COMPILACION, DEBE FIGURAR UN MENSAJE DE QUE EL PROGRAMA NO COMPILO CORRECTAMENTE. ADEMAS NO TIENE QUE GENERARSE EL ARBOL SINTACTICO Y POR
+CONSIGUIENTE TAMPOCO EL ASSEMBLER}*

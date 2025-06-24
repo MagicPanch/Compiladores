@@ -1,0 +1,91 @@
+{
+*{CODIGO DE TESTEO PARA EL ANALIZADOR SEMANTICO CON ERRORES DE FUNCIONES, INVOCACIONES, CLASES, INTERFACES, CLAUSULAS IMPL, HERENCIA Y VARIABLES DE INSTANCIA (TODO LO RELACIONADO A FUNCIONES)}*
+	
+	INTERFACE interfaz {
+		VOID funcion_c1(),
+		VOID funcion_c3(DOUBLE p),
+	},
+
+	CLASS c1 IMPLEMENT interfaz {
+		c2,								*{DEBERIA DETECTARSE: "No existe una clase llamada 'c2' al alcance que pueda heredarse por composicion" porque la clase c2 aun no fue definida}*
+		INT x,
+		ULONG z,		
+		DOUBLE w,		
+
+		VOID funcion_c3(ULONG t),
+
+		VOID funcion_c1 () {
+			z = 30_ul,
+			RETURN,
+		},
+
+		VOID funcion_impl_c1(),
+	},									*{DEBERIA DETECTARSE: "La clase 'c1' no implementa todos los metodos de la interfaz 'interfaz'" porque no implementa funcion_c3 (al tener distintos parametros, no cuenta como implementacion de la funcion_c3 de la interfaz)}*
+
+	IMPL FOR c2: {},					*{DEBERIA DETECTARSE: "La clausula IMPL implementa la clase 'c2', que hasta el momento no existe en su ambito ni en ninguno que lo contenga" porque la clase c2 aun no fue definida}*
+	c2 inst_c2,							*{DEBERIA DETECTARSE: "El tipo 'c2' no es valido" porque la clase c2 aun no fue definida}*
+
+	CLASS c2 {
+		INT x; y; h,
+		c1,
+
+		VOID funcion_c1(ULONG g) {		*{DEBERIA DETECTARSE: "La clase 'c2' ya hereda por la cadena de composicion un metodo llamado 'funcion_c1', de la clase 'c1', y no puede sobreescribirlo", porque en este caso, no es como ocurre con las interfaces y con las clausulas IMPL, para la sobreescritura basta con que los metodos se llamen igual aunque sus parametros no sean iguales}*
+			RETURN,
+		},		
+
+		VOID funcion_c2 (INT numero) {
+			x = numero + 1_i,
+			RETURN,
+		},
+
+		VOID funcion_c4() {
+			VOID funcion_c5() {
+				VOID funcion_c6() {
+					RETURN,
+				},
+				RETURN,
+			},
+			RETURN, 
+		},								*{DEBERIA DETECTARSE: "El metodo 'funcion_c4' posee 2 niveles de anidamiento de funciones locales, y el limite permitido es de uno solo", porque hay una funcion dentro de otra que a su vez esta dentro de otra que ademas es un metodo de clase}*		
+	},
+
+	CLASS c2 {},						*{DEBERIA DETECTARSE: "Ya existe una clase con el nombre 'c2' dentro del ambito 'main'", porque la clase se intenta declarar en el main que es el mismo ambito de una clase con el mismo nombre (intento de redeclaracion de identificador)}*
+	
+	INT interfaz,						*{DEBERIA DETECTARSE: "Ya existe una interfaz con el nombre 'interfaz' dentro del ambito 'main'", porque la variable se intenta declarar en el main que es el mismo ambito de una interfaz con el mismo nombre (intento de redeclaracion de identificador)}*
+	INT x; y,
+	c2 inst_c2,			
+	inst_c2.funcion_c2(),				*{DEBERIA DETECTARSE: "Se esta intentando invocar al metodo funcion_c2 sin ningun parametro cuando en realidad lleva uno", porque se quiere invocar al metodo funcion_c2 de la clase c2, y ese metodo debe recibir un parametro de tipo INT}*
+	inst_c2.c1.funcion_c1(),
+	inst_c2.c1.funcion_impl_c1(),		*{DEBERIA DETECTARSE: "Se esta intentando invocar al metodo funcion_impl_c1 que nunca se implemento", porque el metodo funcion_impl_c1 al que se quiere invocar por la cadena de composicion, en realidad es un prototipo de metodo, pero su implementacion a traves de una clausula IMPL aun no se hizo (aparece luego)}*
+
+	IMPL FOR c1: {
+		VOID funcion_impl_c1() {
+			z -= 1_ul,
+			RETURN,
+		},
+
+		VOID funcion_c3(ULONG j) {		*{DEBERIA DETECTARSE: "No existe el prototipo de metodo 'funcion_c3' dentro de la clase 'c1' con la misma estructura de parametro indicada", porque en realidad el prototipo de metodo que se quiere implementar, tambien tiene un parametro de tipo ULONG pero con otro nombre (ahi se llama "t" y aca se llama "j"), y para poder implementar el metodo, si tiene un parametro ademas de ser del mismo tipo tiene que llamarse igual}*
+			RETURN,
+		},
+	},
+
+	IMPL FOR c1: {
+		VOID funcion_impl_c1() {		*{DEBERIA DETECTARSE: "Ya existe una funcion que implementa el metodo 'funcion_impl_c1' de la clase 'c1' dentro del ambito 'main<c1>'", porque si bien puede haber varias clausulas IMPL para un misma clase en el mismo ambito (ya que como estan en el mismo ambito, el ambito interno de todas es el mismo ya que la clausula IMPL no tiene un nombre por si misma). Entonces, al ser el mismo ambito interno de clausula el de ambas, no pueden implementar un mismo metodo}*
+			INT x,
+			x = 2_i,
+			RETURN,
+		},
+	},
+
+	inst_c2.funcion_c2(2_i),
+
+	VOID funcion_main(DOUBLE d) {
+		x -= y,					
+		RETURN,		
+	},
+
+	funcion_main(x),					*{DEBERIA DETECTARSE: "Se esta intentando invocar a la funcion funcion_main con un parametro de tipo INT cuando en realidad deberia recibir un parametro de tipo DOUBLE"}*
+}
+*{NOTA: AL FINAL DE LA COMPILACION, DEBE FIGURAR UN MENSAJE DE QUE EL PROGRAMA NO COMPILO CORRECTAMENTE. ADEMAS NO TIENE QUE GENERARSE EL ARBOL SINTACTICO Y POR
+CONSIGUIENTE TAMPOCO EL ASSEMBLER. COMO YA SE MENCIONO ARRIBA, ESTO ES TODO LO RELACIONADO A FUNCIONES, POR LO QUE ES DIFICULTOSO TESTEAR POR SEPARADO, YA
+QUE LAS CLASES, INTERFACES, CLAUSULAS IMPL, INVOCACIONES Y DEMAS TIENEN MAS SENTIDO EN CONJUNTO Y ASI SE PUEDEN VER ERRORES MAS ESPECIFICOS COMO EN ESTE CASO}*

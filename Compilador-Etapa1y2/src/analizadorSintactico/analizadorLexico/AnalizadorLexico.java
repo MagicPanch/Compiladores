@@ -3,6 +3,7 @@ package analizadorSintactico.analizadorLexico;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -159,9 +160,57 @@ public class AnalizadorLexico {
 		System.out.println("------------------------TABLA DE SIMBOLOS------------------------");
 		System.out.println();
 		for (String key: simbolos.keySet()) {
-			System.out.println("Lexema: " + key + " - Token: " + simbolos.get(key).getToken());
+			AtributosSimbolo atributos_simbolo = simbolos.get(key);
+			String uso = atributos_simbolo.getUso();
+			if (uso == null)
+				uso = "-";
+			String tipo = atributos_simbolo.getTipo();
+			if (tipo == null)
+				tipo = "-";
+			Integer token = atributos_simbolo.getToken();
+			String token_string = "-";
+			if (token != null && token.intValue() != 0)
+				token_string = token.toString();
+			String cadena_caracteres_print = atributos_simbolo.getCadenaCaracteresPrint();
+			/*String lexema_funcion_implementacion = atributos_simbolo.getLexemaFuncionImplementacion();
+			if (lexema_funcion_implementacion == null)
+				lexema_funcion_implementacion = "-";
+			String lexema_interfaz_implementada = atributos_simbolo.getLexemaInterfazImplementada();
+			if (lexema_interfaz_implementada == null)
+				lexema_interfaz_implementada = "-";
+			String nombre_parametro_formal = atributos_simbolo.getNombreParametroFormal();
+			if (nombre_parametro_formal == null)
+				nombre_parametro_formal = "-";
+			String lexema_clase_asociada = atributos_simbolo.getLexemaClaseAsociada();
+			if (lexema_clase_asociada == null)
+				lexema_clase_asociada = "-";
+			ArrayList<String> lexemas_clases_heredadas = atributos_simbolo.getClasesHeredadas();
+			String clases_heredadas = "";
+			int cantidad_clases_heredadas = lexemas_clases_heredadas.size();
+			if (cantidad_clases_heredadas == 0)
+				clases_heredadas = "-";
+			else {
+				for (int i = 0; i < cantidad_clases_heredadas; i++)
+					if (i < cantidad_clases_heredadas-1)
+						clases_heredadas += lexemas_clases_heredadas.get(i) + ", ";
+					else
+						clases_heredadas += lexemas_clases_heredadas.get(i);
+			}*/
+			//System.out.println("Lexema: " + key + " / Token: " + atributos_simbolo.getToken() + " / Uso: " + uso + " / Tipo: " + tipo + " / Lexema de funcion implementadora: " + lexema_funcion_implementacion + " / Cantidad de prototipos: " + atributos_simbolo.getCantidadPrototipos() + " / Lexema de interfaz implementada: " + lexema_interfaz_implementada + " / Parametro formal: " + nombre_parametro_formal + " / Lexema clase asociada: " + lexema_clase_asociada + " / Clases heredadas: " + clases_heredadas);
+			if (cadena_caracteres_print == null)
+				System.out.println("Lexema: " + key + " / Token: " + token_string + " / Uso: " + uso + " / Tipo: " + tipo);
+			else
+				System.out.println("Lexema: " + key + " / Token: " + token_string + " / Uso: " + uso + " / Tipo: " + tipo + " / Cadena asociada: " + cadena_caracteres_print);
+			System.out.println();
 		}
 		System.out.println();	
+	}
+	
+	public static boolean hayErrores() {
+		for (int i = 0; i < errores_y_warnings.size(); i++)
+			if (errores_y_warnings.get(i).contains("ERROR"))
+				return true; //si al menos uno de las entradas de la tabla de simbolos contiene la subcadena "ERROR", eso quiere decir que hubo por lo menos algun error, ya sea lexico, sintactico o semantico. Si la entrada no tuviera esa subcadena, indefectiblemente tendria la subcadena "WARNING", pero los warnings no son errores
+		return false;
 	}
 
 	public void eliminarConstanteTS(String constante_fuera_rango) { //esta funcion se encarga de eliminar una constante de la tabla de simbolos, y es usada por el parser cuando detecta que una constante entera simple se encuentra fuera de rango
